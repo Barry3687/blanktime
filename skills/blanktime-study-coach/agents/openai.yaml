@@ -1,0 +1,5 @@
+interface:
+  display_name: "留白日程教材教練"
+  short_description: "整理課堂教材、逐觀念講解與出題，匯入網站並連結讀書計畫"
+  default_prompt: "使用 $blanktime-study-coach 整理我提供的教材，產生逐觀念教學與驗證題，連結留白日程的讀書計畫。"
+

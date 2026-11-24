@@ -1,0 +1,98 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="留白日程，結合課表、讀書計畫、逐觀念學習與番茄鐘的期末專案。"><title>留白日程 · Blanktime</title><link rel="stylesheet" href="assets/site.css"></head><body><section id="blanktime" aria-label="留白日程網頁構想">
+  <header class="bt-header">
+    <div class="bt-brand"><span aria-hidden="true">◷</span> 留白日程</div>
+    <nav aria-label="主要頁面">
+      <button type="button" data-page="today" aria-pressed="true">今天</button>
+      <button type="button" data-page="calendar" aria-pressed="false">行事曆</button>
+      <button type="button" data-page="materials" aria-pressed="false">教材與學習</button><button type="button" data-page="study" aria-pressed="false">讀書計畫</button>
+      <button type="button" class="bt-focus-tab" data-page="focus" aria-pressed="false">
+        <span data-timer-state>等待開始</span>番茄鐘
+      </button>
+    </nav>
+  </header>
+  <div class="bt-timer-strip" aria-label="番茄鐘快速控制">
+    <span data-timer-state>等待開始</span><strong data-timer-value>50:00</strong>
+    <button type="button" data-timer-toggle>開始</button>
+    <button type="button" data-timer-add>＋1 分鐘</button>
+  </div>
+  <p class="prototype-note">介面原型 · 畫面行程為示範資料。教材匯入、自動排程與個人行程編輯將逐步加入。</p><div class="bt-body">
+    <section data-panel="today">
+      <div class="bt-intro"><span>11 月 11 日 · 星期三</span><h2>今天的安排</h2></div>
+      <div class="bt-split">
+        <section aria-label="今日時間表">
+          <ol class="bt-agenda">
+            <li><time>09:00–12:00</time><div class="bt-class"><small>固定課表</small><strong>生成式 AI</strong><div class="bt-hours"><span>09–10</span><span>10–11</span><span>11–12</span></div></div></li>
+            <li><time>12:00–12:30</time><div class="bt-rest"><small>休息</small><strong>午餐</strong></div></li>
+            <li><time>13:30–14:30</time><div class="bt-study"><small>讀書計畫</small><strong>期中考 · 第 3 章例題</strong></div></li>
+            <li><time>14:30–15:00</time><div class="bt-flex"><small>彈性時間</small><strong>自由運用</strong></div></li>
+          </ol>
+        </section>
+        <aside class="bt-aside">
+          <section class="bt-due"><h3>即將到期</h3><ul><li>期中考 <span>明天 10:00</span></li><li>實驗報告 <span>明天 23:59</span></li></ul></section>
+          <section><h3>優先順序</h3>
+            <div class="bt-axis-y">重要程度 ↑</div>
+            <div class="bt-plot" role="img" aria-label="期中考及實驗報告都在右上角，期中考更高。還 100 元在左上角。">
+              <span class="bt-dot" style="--x:39%;--y:33%">還 100 元</span>
+              <span class="bt-dot" style="--x:93%;--y:16%">期中考</span>
+              <span class="bt-dot" style="--x:90%;--y:38%">實驗報告</span>
+            </div>
+            <div class="bt-axis-x">緊急程度 →</div>
+          </section>
+        </aside>
+      </div>
+    </section>
+    <section data-panel="calendar" hidden>
+      <div class="bt-intro"><span>11 月</span><h2>行事曆</h2></div>
+      <div class="bt-views" aria-label="行事曆檢視">
+        <button type="button" data-view="month" aria-pressed="true">月曆</button>
+        <button type="button" data-view="week" aria-pressed="false">週檢視</button>
+      </div>
+      <div data-calendar="month" class="bt-month" role="group" aria-label="11 月月曆"></div>
+      <div data-calendar="week" hidden>
+        <ul class="bt-week">
+          <li><span>11/10 週二</span><span>19:00–19:30</span><strong>整理第 2 章筆記</strong></li>
+          <li><span>11/11 週三</span><span>09:00–12:00</span><strong>生成式 AI</strong></li>
+          <li><span>11/11 週三</span><span>13:30–14:30</span><strong>第 3 章例題</strong></li>
+          <li><span>11/11 週三</span><span>14:30–15:00</span><strong>彈性時間</strong></li>
+          <li><span>11/12 週四</span><span>10:00–11:00</span><strong>期中考</strong></li>
+          <li><span>11/12 週四</span><span>23:59</span><strong>實驗報告截止</strong></li>
+        </ul>
+      </div>
+    </section>
+    <section data-panel="materials" hidden><div class="bt-intro"><span>教材與學習</span><h2>從教材開始，一個觀念慢慢學</h2></div><p>使用留白日程教材教練，在聊天環境整理講義、課本或考古題，產生含來源、講解和驗證題的教材包。</p><p>教材包匯入與進度連結尚在開發。</p><p><a href="skills/blanktime-study-coach/SKILL.md">閱讀 Skill</a> · <a href="skills/blanktime-study-coach/examples/minimal-package.json" download>下載格式範例</a></p></section><section data-panel="study" hidden>
+      <div class="bt-intro"><span>11 月 12 日 · 10:00</span><h2>期中考讀書計畫</h2></div>
+      <ul class="bt-chapters">
+        <li><b>A</b><div><strong>第 1 章</strong><span>複習重點並做一道進階題</span></div><span>30 分鐘</span></li>
+        <li><b>B</b><div><strong>第 2 章</strong><span>用自己的話整理筆記</span></div><span>30 分鐘</span></li>
+        <li><b>C</b><div><strong>第 3 章</strong><span>做例題並找出容易錯的步驟</span></div><span>60 分鐘</span></li>
+        <li><b>F</b><div><strong>第 4 章</strong><span>建立基礎架構，再練基礎題</span></div><span>60 分鐘</span></li>
+      </ul>
+    </section>
+    <section data-panel="focus" hidden>
+      <div class="bt-window-seat">
+        <div class="bt-window-copy">
+          <span>留白日程 · 番茄鐘</span>
+          <h2>窗邊小憩</h2>
+          <p>選一件事，留一段時間給它。</p>
+        </div>
+        <div class="bt-clock">
+          <span data-timer-state role="status">等待開始</span>
+          <strong data-timer-value>50:00</strong>
+          <div class="bt-clock-actions">
+            <button type="button" data-timer-toggle>開始</button>
+            <button type="button" data-timer-reset>重設</button>
+          </div>
+          <details>
+            <summary>調整專注與休息時間</summary>
+            <form data-timer-form>
+              <label>專注（分鐘）<input name="focus" type="number" min="1" max="180" value="50" required></label>
+              <label>休息（分鐘）<input name="rest" type="number" min="1" max="180" value="30" required></label>
+              <button type="submit">套用</button>
+            </form>
+            <small data-timer-settings role="status">進行中的倒數保留，新設定從下一階段開始。</small>
+          </details>
+        </div>
+      </div>
+    </section>
+  </div>
+</section><script src="assets/app.js" defer></script></body></html>
