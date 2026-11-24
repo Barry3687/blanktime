@@ -1,0 +1,14 @@
+private/
+.env
+.env.*
+!.env.example
+node_modules/
+__pycache__/
+*.log
+.DS_Store
+.chapter-write.lock
+.chapter-stage-*/
+
+# 私人線上部署來源獨立維護
+online-ai/
+

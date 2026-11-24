@@ -1,0 +1,14 @@
+:root {--bg:#121c18;--panel:#1c2b23;--text:#edf5ef;--muted:#b3c7ba;--accent:#9fdbba;--line:#3a5346;color-scheme:dark;}
+html{font-size:100%;}body{background:var(--bg);font-size:1rem;}
+.sidebar{width:230px;padding:20px;background:#17251e;}
+main{max-width:none;margin-left:230px;padding:24px 30px;}
+.sidebar-label,.fine-print,.progress-panel p,#chapter-nav,.breadcrumb,figcaption,.source-note,.tags span,.steps p,.text-button{font-size:.875rem;}
+.intro{padding:12px 0 20px;}.intro h1{font-size:1.8rem;margin-top:0;}.intro .intro-note,.intro .lead,.intro .tags{display:none;}
+.nav-home,.chapter-card,.empty-state,.quiz-panel,.review-panel,.upload-panel,.formula,.lesson-figure{background:var(--panel);border-color:var(--line);}
+.action-button{background:#9fdbba;color:#102319;border-color:#9fdbba;}.secondary-button{border-color:#537563;}
+.option:has(input:checked),#concept-nav a[aria-current]{background:#2b4436;border-color:var(--accent);}
+.learning-flow{margin:30px 0;}.steps{gap:16px;}.steps h3{font-size:1rem;}
+.upload-panel{margin-top:32px;}.drop-zone,.file-preview,input,textarea,select{background:#142219;border-color:#537563;}
+.mobile-bar{background:#17251e;}.brand{display:none!important;}
+@media(max-width:1000px){.sidebar{width:190px;padding:18px 14px;}main{margin-left:190px;padding:22px;}}
+@media(max-width:760px){.sidebar{width:100%;}main{margin-left:0;padding:20px 16px;}.mobile-bar{display:flex;}.sidebar:not(.is-open){display:none;}.steps{grid-template-columns:1fr;}}

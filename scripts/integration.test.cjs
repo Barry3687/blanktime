@@ -1,0 +1,26 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+function files(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(path.join(dir,e.name)):[path.join(dir,e.name)]);}
+for(const file of files(root).filter(f=>/\.js$/.test(f)))new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const memory=new Map(),storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
+const context={window:{},localStorage:storage,URLSearchParams,location:{search:''},document:{body:{dataset:{}}},fetch:()=>{throw Error('Unexpected network request');}};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(root,'assets/package-validator.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(root,'assets/data.js'),'utf8'),context);
+const data=context.window.BlanktimeData,pkg=JSON.parse(fs.readFileSync(path.join(root,'skills/blanktime-study-coach/examples/minimal-package.json'),'utf8'));
+data.importPackage(pkg);data.select(pkg.courseId);
+assert.equal(data.catalog().chapters.length,1);
+storage.setItem('blanktime:learning:progress:'+pkg.courseId,JSON.stringify(['ch01-c01']));
+data.importPackage(pkg);assert.equal(Object.keys(data.library().courses).length,1);assert.equal(data.progress()[0],'ch01-c01');
+const conflict=structuredClone(pkg);conflict.title='Conflict';assert.throws(()=>data.importPackage(conflict),/相同版本/);
+const upgraded={...pkg,revision:2};data.importPackage(upgraded);assert.equal(data.progress()[0],'ch01-c01');assert.throws(()=>data.importPackage(pkg),/較舊版本/);
+const other={...pkg,courseId:'other-course'};data.importPackage(other);data.select(other.courseId);assert.equal(data.progress().length,0);
+const before=storage.getItem('blanktime:library:v1'),bad=structuredClone(other);bad.lessons[0].concepts[0].quiz.answer=10;
+assert.throws(()=>data.importPackage(bad));assert.equal(storage.getItem('blanktime:library:v1'),before);
+const write=storage.setItem;storage.setItem=()=>{throw Error('QuotaExceededError');};assert.throws(()=>data.importPackage({...other,revision:3}),/QuotaExceeded/);assert.equal(storage.getItem('blanktime:library:v1'),before);storage.setItem=write;
+const core=require('../modules/learning/assets/js/core.js');core.validateCatalog(data.catalog());
+const html=fs.readFileSync(path.join(root,'modules/pomodoro/index.html'),'utf8');
+for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1].trim())new vm.Script(match[1]);
+assert.ok(html.includes('window-seat-pomodoro-v1'));assert.ok(html.includes('data:image/webp;base64,'));
+console.log('PASS: scripts, import idempotency, conflicts, quota failure, multi-course progress isolation and original timer assets.');

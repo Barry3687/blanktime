@@ -1,0 +1,10 @@
+/* Keep the original artwork, weather, audio, props and statistics intact. */
+html,body{width:100%;height:100%;overflow:hidden;}
+.app{width:100%;min-width:0!important;height:100dvh;min-height:0;}
+header .top-right{position:static;}.settings-head small{display:none;}
+@media(max-width:760px){
+ .app{min-width:0!important;}.timer{right:10px!important;bottom:18px!important;width:290px!important;height:250px!important;}.time{font-size:40px!important;}
+ .journal{left:8px!important;bottom:280px!important;width:185px!important;height:150px!important;}.journal h3{font-size:11px!important;}.stat strong{font-size:21px!important;}
+ .workspace{left:0!important;width:58%!important;}.top-right .live-clock{display:none!important;}header{top:16px;right:16px;}
+ dialog{font-size:16px;}.field,.check,.volume-label{font-size:14px;}.hint{font-size:13px;}
+}

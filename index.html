@@ -15,7 +15,7 @@
     <button type="button" data-timer-toggle>開始</button>
     <button type="button" data-timer-add>＋1 分鐘</button>
   </div>
-  <p class="prototype-note">介面原型 · 畫面行程為示範資料。教材匯入、自動排程與個人行程編輯將逐步加入。</p><div class="bt-body">
+  <p class="prototype-note">行程示範 · 個人行程編輯與自動排程建置中；教材學習與番茄鐘已可使用。</p><div class="bt-body">
     <section data-panel="today">
       <div class="bt-intro"><span>11 月 11 日 · 星期三</span><h2>今天的安排</h2></div>
       <div class="bt-split">
@@ -59,40 +59,26 @@
         </ul>
       </div>
     </section>
-    <section data-panel="materials" hidden><div class="bt-intro"><span>教材與學習</span><h2>從教材開始，一個觀念慢慢學</h2></div><p>使用留白日程教材教練，在聊天環境整理講義、課本或考古題，產生含來源、講解和驗證題的教材包。</p><p>教材包匯入與進度連結尚在開發。</p><p><a href="skills/blanktime-study-coach/SKILL.md">閱讀 Skill</a> · <a href="skills/blanktime-study-coach/examples/minimal-package.json" download>下載格式範例</a></p></section><section data-panel="study" hidden>
-      <div class="bt-intro"><span>11 月 12 日 · 10:00</span><h2>期中考讀書計畫</h2></div>
-      <ul class="bt-chapters">
+    <section data-panel="materials" hidden class="bt-learning-panel">
+      <div class="bt-learning-toolbar"><label>目前課程 <select id="course-select" aria-label="切換課程"><option value="">尚未匯入教材</option></select></label><button type="button" id="library-export">備份教材與進度</button><span id="library-status" role="status"></span></div>
+      <div class="bt-learning-layout"><iframe id="learning-frame" title="逐觀念學習與教材預覽" src="modules/learning/index.html?v=20261124"></iframe>
+      <aside class="bt-import"><h2>加入教材</h2><p>把講義交給 ChatGPT 或 Gemini，整理成留白日程教材包，再匯入這裡。</p>
+      <label class="bt-upload">選擇教材包 JSON<input id="package-file" type="file" accept=".json,application/json"></label>
+      <label for="package-text">或貼上整理好的 JSON</label><textarea id="package-text" rows="9" placeholder="貼上 blanktime.study-package/v1 教材包"></textarea>
+      <button type="button" id="package-check" class="bt-primary">預覽匯入內容</button><div id="package-preview" role="status"></div><button id="package-confirm" type="button" class="bt-primary" hidden>確認匯入</button>
+      <p class="bt-muted">教材與進度存在這個瀏覽器，不會發布到 GitHub。重新匯入會保留既有學習進度。</p>
+      <details><summary>整理教材需要的資料</summary><p><a href="skills/blanktime-study-coach/SKILL.md" target="_blank" rel="noopener">教材教練 Skill</a></p><p><a href="skills/blanktime-study-coach/examples/minimal-package.json" download>下載教材包範例</a></p><button type="button" id="copy-prompt">複製整理指令</button><p id="prompt-status" role="status"></p></details>
+      <details><summary>還原備份</summary><label>選擇留白日程備份 JSON<input id="backup-file" type="file" accept=".json,application/json"></label><button id="backup-restore" type="button">檢查並還原備份</button><p id="backup-status" role="status"></p></details>
+      <div id="materials-workspace"></div></aside></div>
+    </section><section data-panel="study" hidden>
+      <div class="bt-intro"><span>學習進度與章節熟悉度</span><h2>我的讀書計畫</h2></div>
+      <div id="study-live"></div><div id="study-demo"><p class="bt-muted">以下為排版範例，匯入教材後會顯示你的真實章節與進度。</p><ul class="bt-chapters">
         <li><b>A</b><div><strong>第 1 章</strong><span>複習重點並做一道進階題</span></div><span>30 分鐘</span></li>
         <li><b>B</b><div><strong>第 2 章</strong><span>用自己的話整理筆記</span></div><span>30 分鐘</span></li>
         <li><b>C</b><div><strong>第 3 章</strong><span>做例題並找出容易錯的步驟</span></div><span>60 分鐘</span></li>
         <li><b>F</b><div><strong>第 4 章</strong><span>建立基礎架構，再練基礎題</span></div><span>60 分鐘</span></li>
       </ul>
-    </section>
-    <section data-panel="focus" hidden>
-      <div class="bt-window-seat">
-        <div class="bt-window-copy">
-          <span>留白日程 · 番茄鐘</span>
-          <h2>窗邊小憩</h2>
-          <p>選一件事，留一段時間給它。</p>
-        </div>
-        <div class="bt-clock">
-          <span data-timer-state role="status">等待開始</span>
-          <strong data-timer-value>50:00</strong>
-          <div class="bt-clock-actions">
-            <button type="button" data-timer-toggle>開始</button>
-            <button type="button" data-timer-reset>重設</button>
-          </div>
-          <details>
-            <summary>調整專注與休息時間</summary>
-            <form data-timer-form>
-              <label>專注（分鐘）<input name="focus" type="number" min="1" max="180" value="50" required></label>
-              <label>休息（分鐘）<input name="rest" type="number" min="1" max="180" value="30" required></label>
-              <button type="submit">套用</button>
-            </form>
-            <small data-timer-settings role="status">進行中的倒數保留，新設定從下一階段開始。</small>
-          </details>
-        </div>
-      </div>
-    </section>
+</div>    </section>
+    <section data-panel="focus" hidden class="bt-focus-panel"><iframe id="pomodoro-frame" title="番茄鐘與原版窗邊風景" src="modules/pomodoro/index.html" allow="autoplay"></iframe></section>
   </div>
-</section><script src="assets/app.js" defer></script></body></html>
+</section><script src="assets/package-validator.js" defer></script><script src="assets/data.js?v=20261124" defer></script><script src="assets/app.js" defer></script><script src="assets/library.js?v=20261124" defer></script><script src="modules/learning/assets/js/workspace.js" defer></script></body></html>
