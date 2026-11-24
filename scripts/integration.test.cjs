@@ -22,5 +22,5 @@ const write=storage.setItem;storage.setItem=()=>{throw Error('QuotaExceededError
 const core=require('../modules/learning/assets/js/core.js');core.validateCatalog(data.catalog());
 const html=fs.readFileSync(path.join(root,'modules/pomodoro/index.html'),'utf8');
 for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1].trim())new vm.Script(match[1]);
-assert.ok(html.includes('window-seat-pomodoro-v1'));assert.ok(html.includes('data:image/webp;base64,'));
+assert.ok(fs.readFileSync(path.join(root,'modules/pomodoro/timer.js'),'utf8').includes('window-seat-pomodoro-v1'));assert.ok(fs.readFileSync(path.join(root,'modules/pomodoro/scene.css'),'utf8').includes('assets/'));assert.equal(fs.readdirSync(path.join(root,'modules/pomodoro/assets')).length,18);
 console.log('PASS: scripts, import idempotency, conflicts, quota failure, multi-course progress isolation and original timer assets.');

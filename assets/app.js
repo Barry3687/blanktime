@@ -59,13 +59,17 @@
 
     const frame = document.getElementById('pomodoro-frame');
     const measureChrome = () => root.style.setProperty('--bt-chrome-height', (root.querySelector('.bt-header').offsetHeight + root.querySelector('.bt-timer-strip').offsetHeight) + 'px');
-    new ResizeObserver(measureChrome).observe(root.querySelector('.bt-header'));
+    const chromeObserver = new ResizeObserver(measureChrome);
+    chromeObserver.observe(root.querySelector('.bt-header'));
+    chromeObserver.observe(root.querySelector('.bt-timer-strip'));
     measureChrome();
     function timerAPI() { return frame.contentWindow?.BlanktimePomodoro; }
     root.querySelector('[data-timer-toggle]').onclick = () => timerAPI()?.toggle();
     root.querySelector('[data-timer-add]').onclick = () => timerAPI()?.addMinute();
     function renderTimer() {
       const t = timerAPI()?.snapshot();
+      root.querySelector('[data-timer-toggle]').disabled = !t;
+      root.querySelector('[data-timer-add]').disabled = !t;
       if (!t) return;
       const sec = Math.ceil(t.remaining / 1000);
       const time = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');

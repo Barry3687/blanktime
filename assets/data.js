@@ -7,8 +7,8 @@
     if (!raw || typeof raw.courses !== 'object' || Array.isArray(raw.courses)) throw Error('教材資料無法讀取，請保留備份後再試。');
     return raw;
   }
-  function activeId() { return localStorage.getItem(ACTIVE) || ''; }
-  function active() { return library().courses[activeId()] || null; }
+  function activeId() { try { return localStorage.getItem(ACTIVE) || ''; } catch { return ''; } }
+  function active() { try { return library().courses[activeId()] || null; } catch { return null; } }
   function select(id) {
     if (!Object.hasOwn(library().courses, id)) throw Error('找不到課程');
     localStorage.setItem(ACTIVE, id);
