@@ -18,7 +18,7 @@
 
 ## 尚未完成
 
-正式版本已確定需要登入帳號及手機／電腦跨裝置同步；目前尚未接上帳號與雲端資料服務，仍使用瀏覽器儲存。
+正式版本已確定使用 Google 登入，跨裝置同步整理後的課程、進度、熟悉度，以及同一個番茄鐘倒數與完成紀錄。cloud/ 已有資料庫結構、同步介面、設定範例與驗收說明；尚未接上使用者自己的雲端專案，正式網站仍使用瀏覽器儲存。
 
 今天與行事曆仍為標示清楚的示範資料。個人行程編輯、課表匯入、假日、提醒、自動排程尚未完成。讀書計畫目前追蹤進度，尚未自動安排時段。後續 AI 排程需先預覽整週，經使用者確認再加入行事曆。
 
@@ -36,6 +36,8 @@
 
 - node scripts/check.cjs
 - node scripts/integration.test.cjs
+- node scripts/cloud.test.cjs
+- node scripts/cloud-sql.test.cjs（需另安裝 @electric-sql/pglite，或傳入套件的 dist/index.cjs 路徑）
 - node modules/learning/tests/core.test.js
 - node modules/learning/tests/figures.test.js
 
