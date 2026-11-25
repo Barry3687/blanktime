@@ -2,13 +2,15 @@
 begin;
 create table if not exists public.blanktime_documents (
   user_id uuid not null references auth.users(id) on delete cascade,
-  kind text not null check (kind in ('course', 'progress', 'mastery', 'timer')),
+  kind text not null check (kind in ('course', 'progress', 'mastery', 'timer', 'schedule')),
   document_id text not null check (document_id ~ '^[a-z0-9][a-z0-9:-]{0,159}$'),
   revision bigint not null default 1 check (revision > 0),
   payload jsonb not null check (jsonb_typeof(payload) = 'object'),
   updated_at timestamptz not null default now(),
   primary key (user_id, kind, document_id)
 );
+alter table public.blanktime_documents drop constraint if exists blanktime_documents_kind_check;
+alter table public.blanktime_documents add constraint blanktime_documents_kind_check check (kind in ('course','progress','mastery','timer','schedule'));
 create table if not exists public.blanktime_operations (
   user_id uuid not null references auth.users(id) on delete cascade,
   operation_id uuid not null,
@@ -44,7 +46,7 @@ declare
   prior public.blanktime_operations%rowtype; request_value jsonb; result jsonb;
 begin
   if actor is null then raise exception 'Authentication required' using errcode = '28000'; end if;
-  if p_kind not in ('course','progress','mastery','timer') or p_kind is null
+  if p_kind not in ('course','progress','mastery','timer','schedule') or p_kind is null
     or p_document_id is null or p_document_id !~ '^[a-z0-9][a-z0-9:-]{0,159}$'
     or p_expected_revision is null or p_expected_revision < 0 or p_operation_id is null
     or p_payload is null or jsonb_typeof(p_payload) <> 'object'

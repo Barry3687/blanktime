@@ -1,28 +1,11 @@
 
   (() => {
+    const store = window.BlanktimeStore || localStorage;
     const root = document.getElementById("blanktime");
     const pages = [...root.querySelectorAll("[data-page]")];
     const panels = [...root.querySelectorAll("[data-panel]")];
     const views = [...root.querySelectorAll("[data-view]")];
     const calendars = [...root.querySelectorAll("[data-calendar]")];
-    const month = root.querySelector('[data-calendar="month"]');
-    for (const day of ["一", "二", "三", "四", "五", "六", "日"]) {
-      const heading = document.createElement("span");
-      heading.textContent = day;
-      month.append(heading);
-    }
-    for (let index = 0; index < 36; index += 1) {
-      const date = index - 5;
-      const cell = document.createElement("div");
-      if (date > 0) cell.textContent = String(date);
-      if (date === 11) cell.className = "bt-active-date";
-      if (date === 12) {
-        const label = document.createElement("em");
-        label.textContent = "期中考・報告";
-        cell.append(label);
-      }
-      month.append(cell);
-    }
     function choosePage(page) {
       for (const button of pages) button.setAttribute("aria-pressed", String(button.dataset.page === page));
       for (const panel of panels) panel.hidden = panel.dataset.panel !== page;
@@ -38,7 +21,7 @@
       const page = pages.find(button => button.getAttribute("aria-pressed") === "true").dataset.page;
       const view = views.find(button => button.getAttribute("aria-pressed") === "true").dataset.view;
       try {
-        localStorage.setItem("blanktime:view:v1", JSON.stringify({ privateContent: { page, view } }));
+        store.setItem("blanktime:view:v1", JSON.stringify({ privateContent: { page, view } }));
       } catch {}
     }
     function restore(state) {
@@ -54,7 +37,7 @@
       chooseView(button.dataset.view);
       saveSelection();
     });
-    try { restore(JSON.parse(localStorage.getItem("blanktime:view:v1") || "null")); } catch {}
+    try { restore(JSON.parse(store.getItem("blanktime:view:v1") || "null")); } catch {}
     
 
     const frame = document.getElementById('pomodoro-frame');

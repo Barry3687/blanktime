@@ -98,7 +98,7 @@
     } catch { available = false; }
     return {
       get available() { return available; },
-      get completed() { return [...completed]; },
+      get completed() { try { const latest=JSON.parse(storageObject.getItem(KEY)||"[]"); if(Array.isArray(latest))completed=[...new Set(latest.filter(id=>typeof id==="string"))]; } catch {} return [...completed]; },
       get lastId() { return lastId; },
       visit(id) {
         lastId = id;

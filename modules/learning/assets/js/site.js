@@ -5,7 +5,7 @@ const chapterNav = document.querySelector("#chapter-nav");
 const resetButton = document.querySelector("#reset-progress");
 let chapters = [];
 let progressState;
-try { progressState = LectureCore.storage(localStorage); }
+try { progressState = LectureCore.storage(window.BlanktimeStore || localStorage); }
 catch { progressState = LectureCore.storage(null); }
 
 document.querySelector("#menu-toggle").addEventListener("click", event => {

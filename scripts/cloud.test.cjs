@@ -35,6 +35,7 @@ async function main(){
   assert.equal(remaining({status:'paused',remaining:1234},999999),1234);
   assert.deepEqual(mergeProgress({completed:['one','two']},{completed:['one']}),{completed:['one','two'],lastId:null});
   await assert.rejects(repo.change('timer','another-timer',()=>({})),/共享狀態/);
+  const guarded=new Repository({rpc,uuid:()=>String(++uuid),owner:'owner-a'});assert.throws(()=>guarded.accept({document:{user_id:'owner-b',kind:'course',document_id:'a',revision:1,payload:{}}},time,time),/帳號不符/);assert.equal(guarded.documents.size,0);
   const old=repo.snapshot('progress','course-a');
   repo.rpc=async()=>{throw Error('Offline');};
   await assert.rejects(repo.change('progress','course-a',()=>({completed:[]})),/Offline/);

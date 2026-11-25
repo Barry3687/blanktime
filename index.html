@@ -1,63 +1,30 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="留白日程，結合課表、讀書計畫、逐觀念學習與番茄鐘的期末專案。"><title>留白日程 · Blanktime</title><link rel="stylesheet" href="assets/site.css?v=20261126"></head><body><section id="blanktime" aria-label="留白日程網頁構想">
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="留白日程，結合課表、讀書計畫、逐觀念學習與番茄鐘的期末專案。"><title>留白日程 · Blanktime</title><link rel="stylesheet" href="assets/site.css?v=cloud1"></head><body><section id="blanktime" aria-label="留白日程網頁構想">
   <header class="bt-header">
     <div class="bt-brand"><span aria-hidden="true">◷</span> 留白日程</div>
     <nav aria-label="主要頁面">
       <button type="button" data-page="today" aria-pressed="true">今天</button>
       <button type="button" data-page="calendar" aria-pressed="false">行事曆</button>
-      <button type="button" data-page="materials" aria-pressed="false">教材與學習</button><button type="button" data-page="study" aria-pressed="false">讀書計畫</button>
+      <button type="button" data-page="materials" aria-pressed="false">教材與學習</button><button type="button" data-page="study" aria-pressed="false">讀書計畫</button><button type="button" id="account-open">帳號</button>
     </nav>
     <div class="bt-focus-hub" role="group" aria-label="番茄鐘">
       <button type="button" class="bt-focus-tab" data-page="focus" aria-pressed="false"><span class="bt-focus-title">番茄鐘 <strong data-timer-value>50:00</strong></span><span data-timer-state>載入中</span></button>
       <div class="bt-quick-actions" aria-label="番茄鐘快速控制"><button type="button" data-timer-toggle disabled>開始</button><button type="button" data-timer-add disabled aria-label="番茄鐘增加一分鐘">＋1 分</button></div>
     </div>
   </header>
-  <p class="prototype-note">行程示範 · 個人行程編輯與自動排程建置中；教材學習與番茄鐘已可使用。</p><div class="bt-body">
+  <div id="sync-status" class="bt-sync-status" role="status">訪客模式・僅存於此瀏覽器</div><p class="prototype-note">課表、行程與學習進度整合；Google 登入尚待完成授權設定。</p><div class="bt-body">
     <section data-panel="today">
-      <div class="bt-intro"><span>11 月 11 日 · 星期三</span><h2>今天的安排</h2></div>
-      <div class="bt-split">
-        <section aria-label="今日時間表">
-          <ol class="bt-agenda">
-            <li><time>09:00–12:00</time><div class="bt-class"><small>固定課表</small><strong>生成式 AI</strong><div class="bt-hours"><span>09–10</span><span>10–11</span><span>11–12</span></div></div></li>
-            <li><time>12:00–12:30</time><div class="bt-rest"><small>休息</small><strong>午餐</strong></div></li>
-            <li><time>13:30–14:30</time><div class="bt-study"><small>讀書計畫</small><strong>期中考 · 第 3 章例題</strong></div></li>
-            <li><time>14:30–15:00</time><div class="bt-flex"><small>彈性時間</small><strong>自由運用</strong></div></li>
-          </ol>
-        </section>
-        <aside class="bt-aside">
-          <section class="bt-due"><h3>即將到期</h3><ul><li>期中考 <span>明天 10:00</span></li><li>實驗報告 <span>明天 23:59</span></li></ul></section>
-          <section><h3>優先順序</h3>
-            <div class="bt-axis-y">重要程度 ↑</div>
-            <div class="bt-plot" role="img" aria-label="期中考及實驗報告都在右上角，期中考更高。還 100 元在左上角。">
-              <span class="bt-dot" style="--x:39%;--y:33%">還 100 元</span>
-              <span class="bt-dot" style="--x:93%;--y:16%">期中考</span>
-              <span class="bt-dot" style="--x:90%;--y:38%">實驗報告</span>
-            </div>
-            <div class="bt-axis-x">緊急程度 →</div>
-          </section>
-        </aside>
-      </div>
+      <div class="planner-heading"><div class="bt-intro"><span id="today-date"></span><h2>今天的安排</h2></div><button type="button" id="today-new-event">新增事項</button></div>
+      <div class="bt-split"><section aria-label="一整天的時間表"><ol id="today-agenda" class="bt-agenda"></ol></section><aside class="bt-aside"><section class="bt-due"><h3>即將到期</h3><ul id="upcoming"></ul></section><section><h3>優先順序</h3><div class="bt-axis-y">重要程度 ↑</div><div id="priority-plot" class="bt-plot" role="group" aria-label="使用者事項的重要與緊急四象限"></div><div class="bt-axis-x">緊急程度 →</div><p class="bt-muted">期限越近越往右，重要程度可自行調整；假日與自動讀書時段不放入此圖。</p></section></aside></div>
     </section>
     <section data-panel="calendar" hidden>
-      <div class="bt-intro"><span>11 月</span><h2>行事曆</h2></div>
-      <div class="bt-views" aria-label="行事曆檢視">
-        <button type="button" data-view="month" aria-pressed="true">月曆</button>
-        <button type="button" data-view="week" aria-pressed="false">週檢視</button>
-      </div>
-      <div data-calendar="month" class="bt-month" role="group" aria-label="11 月月曆"></div>
-      <div data-calendar="week" hidden>
-        <ul class="bt-week">
-          <li><span>11/10 週二</span><span>19:00–19:30</span><strong>整理第 2 章筆記</strong></li>
-          <li><span>11/11 週三</span><span>09:00–12:00</span><strong>生成式 AI</strong></li>
-          <li><span>11/11 週三</span><span>13:30–14:30</span><strong>第 3 章例題</strong></li>
-          <li><span>11/11 週三</span><span>14:30–15:00</span><strong>彈性時間</strong></li>
-          <li><span>11/12 週四</span><span>10:00–11:00</span><strong>期中考</strong></li>
-          <li><span>11/12 週四</span><span>23:59</span><strong>實驗報告截止</strong></li>
-        </ul>
-      </div>
+      <div class="planner-heading"><div class="bt-intro"><span>月曆與每週安排</span><h2>行事曆</h2></div><div class="planner-inline"><button type="button" id="new-event">新增事項</button><button type="button" id="new-course">新增固定課表</button><button type="button" id="planner-import">匯入課表</button></div></div>
+      <div class="planner-heading"><div class="planner-inline"><button id="month-prev" type="button" aria-label="上一個月">上個月</button><h3 id="calendar-month"></h3><button id="month-next" type="button" aria-label="下一個月">下個月</button><button id="month-today" type="button">今天</button></div><div class="bt-views"><button type="button" data-view="month" aria-pressed="true">月曆</button><button type="button" data-view="week" aria-pressed="false">週檢視</button></div></div>
+      <p id="planner-status" role="status"></p><div data-calendar="month" class="planner-month-layout"><div id="month-grid" class="bt-month" role="group" aria-label="每月行事曆"></div><aside><h3 id="selected-date"></h3><ol id="selected-agenda" class="bt-agenda"></ol></aside></div><div data-calendar="week" id="week-list" hidden></div>
+      <p class="bt-muted">週末以底色區分。國定假日及連假資料尚未自動連接；可先新增「節日／假日」，或在核對後匯入。</p><details class="planner-details"><summary>我的固定課表</summary><ul id="course-list"></ul></details>
     </section>
     <section data-panel="materials" hidden class="bt-learning-panel">
       <div class="bt-learning-toolbar"><label>目前課程 <select id="course-select" aria-label="切換課程"><option value="">尚未匯入教材</option></select></label><button type="button" id="library-export">備份教材與進度</button><span id="library-status" role="status"></span></div>
-      <div class="bt-learning-layout"><iframe id="learning-frame" title="逐觀念學習與教材預覽" src="modules/learning/index.html?v=20261124"></iframe>
+      <div class="bt-learning-layout"><iframe id="learning-frame" title="逐觀念學習與教材預覽" src="modules/learning/index.html?v=cloud1"></iframe>
       <aside class="bt-import"><h2>加入教材</h2><p>把講義交給 ChatGPT 或 Gemini，整理成留白日程教材包，再匯入這裡。</p>
       <label class="bt-upload">選擇教材包 JSON<input id="package-file" type="file" accept=".json,application/json"></label>
       <label for="package-text">或貼上整理好的 JSON</label><textarea id="package-text" rows="9" placeholder="貼上 blanktime.study-package/v1 教材包"></textarea>
@@ -68,13 +35,18 @@
       <div id="materials-workspace"></div></aside></div>
     </section><section data-panel="study" hidden>
       <div class="bt-intro"><span>學習進度與章節熟悉度</span><h2>我的讀書計畫</h2></div>
-      <div id="study-live"></div><div id="study-demo"><p class="bt-muted">以下為排版範例，匯入教材後會顯示你的真實章節與進度。</p><ul class="bt-chapters">
+      <details class="planner-details" open><summary>安排接下來一週的讀書時間</summary><p class="bt-muted">依未完成待辦與教材任務產生規則排程，先預覽再加入。這不是網站即時呼叫 AI。</p><div class="planner-fields"><label>開始日期<input id="plan-from" type="date" required></label><label>考試／複習期限（選填）<input id="plan-exam" type="datetime-local"></label><label>每天開始<input id="plan-day-start" type="time" value="09:00" step="1800"></label><label>每天結束<input id="plan-day-end" type="time" value="22:00" step="1800"></label><label>每日最多讀書（分鐘）<input id="plan-max" type="number" value="240" min="30" max="720" step="30"></label></div><button id="plan-generate" type="button">產生一週預覽</button><button id="plan-confirm" type="button" hidden>確認加入行事曆</button><div id="plan-preview" role="status"></div></details><div id="study-live"></div><div id="study-demo"><p class="bt-muted">以下為排版範例，匯入教材後會顯示你的真實章節與進度。</p><ul class="bt-chapters">
         <li><b>A</b><div><strong>第 1 章</strong><span>複習重點並做一道進階題</span></div><span>30 分鐘</span></li>
         <li><b>B</b><div><strong>第 2 章</strong><span>用自己的話整理筆記</span></div><span>30 分鐘</span></li>
         <li><b>C</b><div><strong>第 3 章</strong><span>做例題並找出容易錯的步驟</span></div><span>60 分鐘</span></li>
         <li><b>F</b><div><strong>第 4 章</strong><span>建立基礎架構，再練基礎題</span></div><span>60 分鐘</span></li>
       </ul>
 </div>    </section>
-    <section data-panel="focus" hidden class="bt-focus-panel"><iframe id="pomodoro-frame" title="番茄鐘與原版窗邊風景" src="modules/pomodoro/index.html?v=20261124-assets" allow="autoplay"></iframe></section>
+    <section data-panel="focus" hidden class="bt-focus-panel"><iframe id="pomodoro-frame" title="番茄鐘與原版窗邊風景" src="modules/pomodoro/index.html?v=cloud1" allow="autoplay"></iframe></section>
   </div>
-</section><script src="assets/package-validator.js" defer></script><script src="assets/data.js?v=20261124-assets" defer></script><script src="assets/app.js?v=20261126" defer></script><script src="assets/library.js?v=20261124" defer></script><script src="modules/learning/assets/js/workspace.js" defer></script></body></html>
+</section>
+<dialog id="event-dialog" aria-labelledby="event-title"><div class="account-dialog-head"><h2 id="event-title">新增／編輯事項</h2><button id="event-close" type="button">關閉</button></div><form id="event-form"><input type="hidden" name="id"><div class="planner-fields"><label>事項名稱<input name="title" maxlength="200" required></label><label>類別<select name="type"><option value="task">待辦</option><option value="assignment">作業</option><option value="exam">考試</option><option value="meeting">重要事項</option><option value="study">讀書</option><option value="rest">休息</option><option value="flex">彈性時間</option><option value="holiday">節日／假日</option></select></label><label>日期<input type="date" name="date" required></label><label>開始時間（選填）<input type="time" name="start" step="300"></label><label>結束時間（選填）<input type="time" name="end" step="300"></label><label>截止／提醒時間（選填）<input type="datetime-local" name="deadline"></label><label>重要程度 0–100<input name="importance" type="number" min="0" max="100" value="50" required></label><label>預估需要幾分鐘<input name="estimate" type="number" min="5" max="1440" step="5" value="60" required></label></div><label class="planner-check"><input type="checkbox" name="includeMatrix" checked>放入重要／緊急四象限</label><p class="bt-muted">時間可精確到 5 分鐘。休息和彈性時間至少 30 分鐘。填入截止時間後會出現在即將到期；系統通知尚未開發。</p><p id="event-error" role="alert"></p><button type="submit">儲存事項</button></form></dialog>
+<dialog id="course-dialog" aria-labelledby="course-title"><div class="account-dialog-head"><h2 id="course-title">固定課表</h2><button id="course-close" type="button">關閉</button></div><form id="course-form"><input type="hidden" name="id"><div class="planner-fields"><label>課名<input name="title" maxlength="200" required></label><label>星期<select name="weekday"><option value="1">一</option><option value="2">二</option><option value="3">三</option><option value="4">四</option><option value="5">五</option><option value="6">六</option><option value="0">日</option></select></label><label>開始時間<input type="time" name="start" step="300" required></label><label>結束時間<input type="time" name="end" step="300" required></label><label>學期開始<input type="date" name="from" required></label><label>學期結束<input type="date" name="to" required></label><label>停課日期（逗號分隔）<input name="exceptions" placeholder="2026-12-01, 2026-12-08"></label></div><label class="planner-check"><input name="skipHolidays" type="checkbox" checked>遇到已加入的假日不排課</label><p id="course-error" role="alert"></p><button type="submit">儲存課表</button></form></dialog>
+<dialog id="planner-import-dialog" aria-labelledby="planner-import-title"><div class="account-dialog-head"><h2 id="planner-import-title">匯入課表</h2><button id="planner-import-close" type="button">關閉</button></div><p>先把課表截圖交給 ChatGPT／Gemini，確認後將 JSON 貼到這裡。</p><button id="planner-prompt" type="button">複製課表整理指令</button><label>課表 JSON<textarea id="planner-import-text" rows="12" placeholder="blanktime.schedule/v1"></textarea></label><button id="planner-import-check" type="button">檢查與預覽</button><p id="planner-import-preview" role="status"></p><button id="planner-import-confirm" type="button" hidden>確認匯入課表</button></dialog>
+<dialog id="account-dialog" aria-labelledby="account-title"><div class="account-dialog-head"><h2 id="account-title">帳號與同步</h2><button type="button" id="account-close" aria-label="關閉帳號設定">關閉</button></div><p id="account-name">尚未登入</p><p id="account-status" role="status">訪客模式・僅存於此瀏覽器</p><p id="account-setup-note">使用 Google 登入後，同步整理好的課程、進度及同一個番茄鐘。原始教材不會上傳。</p><button id="account-login" type="button" disabled>正在確認 Google 登入設定</button><button id="account-logout" type="button" hidden>登出此裝置</button><button id="account-retry" type="button">重新同步</button><button id="account-migrate" type="button" hidden>預覽合併這台裝置的訪客資料</button><div id="migration-preview"></div><button id="migration-confirm" type="button" hidden>確認合併</button></dialog>
+<script src="assets/value.js?v=sync2"></script><script src="assets/planner-core.js?v=planner1" defer></script><script src="assets/storage.js?v=cloud1" defer></script><script src="cloud/client.js?v=cloud1" defer></script><script src="assets/package-validator.js" defer></script><script src="assets/data.js?v=cloud1" defer></script><script src="assets/app.js?v=cloud1" defer></script><script src="assets/library.js?v=cloud1" defer></script><script src="modules/learning/assets/js/workspace.js" defer></script><script src="assets/planner.js?v=planner1" defer></script><script src="assets/cloud-app.js?v=cloud1" defer></script></body></html>

@@ -3,7 +3,7 @@
   window.BlanktimePomodoro = {
     snapshot() {
       const t = state.timer;
-      return {phase:t.phase, status:t.status, remaining:t.status === 'running' ? Math.max(0,t.end-Date.now()) : t.remaining};
+      return {phase:t.phase, status:t.status, remaining:t.status === 'running' ? Math.max(0,t.end-timerNow()) : t.remaining};
     },
     toggle() { act(state.timer.status === 'running' ? 'pause' : 'start'); },
     addMinute() {

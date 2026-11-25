@@ -92,6 +92,6 @@ window.LectureWorkspace = (() => {
     picker.onchange=()=>load([...picker.files]);dropZone(zone,load);consentLabel.hidden=true; section.append(zone,notice,consentLabel,list);host.append(section);
   }
   document.addEventListener("DOMContentLoaded",()=>{const host=document.querySelector("#materials-workspace");if(host){materials(host);}});
-  return {request,imageData,screenshotInput,coordinateLab,setSubject};
+  return {request,imageData,screenshotInput,coordinateLab,setSubject,resetMaterials(){const host=document.querySelector("#materials-workspace");if(host){host.replaceChildren();materials(host);}}};
 })();
 

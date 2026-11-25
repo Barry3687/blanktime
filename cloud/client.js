@@ -1,7 +1,8 @@
 /* Integration layer; not loaded by production until the cloud project is configured. */
 (function (scope) {
   'use strict';
-  const TYPES = new Set(['course','progress','mastery','timer']);
+  const TYPES = new Set(['course','progress','mastery','timer','schedule']);
+  const equivalent=(a,b)=>scope.BlanktimeValue ? scope.BlanktimeValue.equal(a,b) : JSON.stringify(a)===JSON.stringify(b);
   const copy = value => JSON.parse(JSON.stringify(value));
   const key = (kind,id) => kind + ':' + id;
   function validate(kind,id,payload) {
@@ -10,15 +11,16 @@
     if (kind === 'timer' && id !== 'shared') throw Error('番茄鐘必須使用同一份共享狀態');
   }
   class Repository {
-    constructor({rpc,uuid,clock=()=>Date.now(),sleep=ms=>new Promise(r=>setTimeout(r,ms))}) {
+    constructor({rpc,uuid,owner=null,clock=()=>Date.now(),sleep=ms=>new Promise(r=>setTimeout(r,ms))}) {
       this.rpc=rpc;this.uuid=uuid;this.clock=clock;this.sleep=sleep;
-      this.documents=new Map();this.queue=Promise.resolve();this.offset=0;
+      this.documents=new Map();this.queue=Promise.resolve();this.offset=0;this.owner=owner;
     }
     now() {return this.clock()+this.offset;}
     accept(response,sent,received) {
       if (Number.isFinite(response.server_now)) this.offset=response.server_now-(sent+received)/2;
       const rows=response.documents || (response.document ? [response.document] : []);
       for (const row of rows) {
+        if(this.owner && row.user_id!==this.owner)throw Error('回傳資料的帳號不符，已停止同步');
         validate(row.kind,row.document_id,row.payload);
         const old=this.documents.get(key(row.kind,row.document_id));
         if (!old || row.revision>=old.revision) this.documents.set(key(row.kind,row.document_id),copy(row));
@@ -36,6 +38,7 @@
         for (let attempt=0;attempt<4;attempt++) {
           const old=this.snapshot(kind,id), payload=await update(old ? copy(old.payload) : null,this.now());
           validate(kind,id,payload);
+          if(old && equivalent(payload,old.payload))return old;
           const args={p_kind:kind,p_document_id:id,p_expected_revision:old?.revision || 0,p_payload:payload,p_operation_id:this.uuid()};
           let response;
           // Retry ambiguous network outcomes with exactly the same operation ID/body.

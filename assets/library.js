@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  const store = window.BlanktimeStore || localStorage;
   const $ = id => document.getElementById(id), data = window.BlanktimeData;
   let pending = null;
   const text = (tag, value) => { const n = document.createElement(tag); n.textContent = value; return n; };
@@ -35,7 +36,7 @@
       const result = window.BlanktimeValidate(pkg);
       const current = data.library().courses[pkg.courseId];
       if (current && pkg.revision < current.revision) throw Error('版本較舊，請使用最新教材包。');
-      if (current && pkg.revision === current.revision && JSON.stringify(pkg) !== JSON.stringify(current)) throw Error('相同版本有內容衝突，請提高 revision 後再匯入。');
+      if (current && pkg.revision === current.revision && !window.BlanktimeValue.equal(pkg,current)) throw Error('相同版本有內容衝突，請提高 revision 後再匯入。');
       pending = pkg;
       $('package-preview').append(text('h3', pkg.title), text('p', `版本 ${pkg.revision} · ${result.chapters} 章 · ${result.concepts} 個觀念`));
       const list = document.createElement('ul');
@@ -62,7 +63,7 @@
     $('study-demo').hidden = courses.length > 0;
     if (!courses.length) return;
     for (const pkg of courses) {
-      const completed = data.progress(pkg.courseId), mastery = JSON.parse(localStorage.getItem(masteryKey(pkg.courseId)) || '{}');
+      const completed = data.progress(pkg.courseId), mastery = JSON.parse(store.getItem(masteryKey(pkg.courseId)) || '{}');
       const section = document.createElement('section'); section.className = 'bt-course-plan';
       section.append(text('h3', pkg.title));
       const list = document.createElement('ul'); list.className = 'bt-chapters';
@@ -73,7 +74,7 @@
         select.value = mastery[lesson.id] ?? pkg.study.find(s => s.chapterId === lesson.id)?.mastery ?? '';
         select.onchange = () => {
           const next = {...mastery, [lesson.id]:select.value};
-          try { localStorage.setItem(masteryKey(pkg.courseId), JSON.stringify(next)); renderStudy(); }
+          try { store.setItem(masteryKey(pkg.courseId), JSON.stringify(next)); renderStudy(); }
           catch { select.value = mastery[lesson.id] || ''; status('瀏覽器無法儲存熟悉度，原記錄仍保留。'); }
         };
         const info = document.createElement('div'), count = lesson.concepts.filter(c => completed.includes(c.id)).length;
@@ -102,7 +103,7 @@
       const library = data.library(), progress = {}, mastery = {};
       for (const pkg of Object.values(library.courses)) {
         progress[pkg.courseId] = data.progress(pkg.courseId);
-        mastery[pkg.courseId] = JSON.parse(localStorage.getItem(masteryKey(pkg.courseId)) || '{}');
+        mastery[pkg.courseId] = JSON.parse(store.getItem(masteryKey(pkg.courseId)) || '{}');
       }
       download({format:'blanktime.backup/v1', library, progress, mastery}, 'blanktime-backup.json');
       status('已匯出教材、理解進度與熟悉度。');
@@ -121,21 +122,21 @@
         window.BlanktimeValidate(pkg);
         if (id !== pkg.courseId) throw Error('課程識別碼不符。');
         const old = next.courses[id];
-        if (old && (pkg.revision < old.revision || (pkg.revision === old.revision && JSON.stringify(pkg) !== JSON.stringify(old)))) throw Error('備份與既有教材版本衝突，原資料已保留。');
+        if (old && (pkg.revision < old.revision || (pkg.revision === old.revision && !window.BlanktimeValue.equal(pkg,old)))) throw Error('備份與既有教材版本衝突，原資料已保留。');
         next.courses = {...next.courses, [id]:pkg};
         const progress = backup.progress?.[id] || [], mastery = backup.mastery?.[id] || {};
         const ids = new Set(pkg.lessons.flatMap(l => l.concepts.map(c => c.id)));
         if (!Array.isArray(progress) || progress.some(x => !ids.has(x))) throw Error('進度資料有誤。');
         if (!mastery || Array.isArray(mastery) || typeof mastery !== 'object' || Object.entries(mastery).some(([k,v]) => !pkg.lessons.some(l => l.id === k) || !['','A','B','C','F'].includes(v))) throw Error('熟悉度資料有誤。');
         writes.set(progressKey(id), JSON.stringify([...new Set([...data.progress(id), ...progress])]));
-        writes.set(masteryKey(id), JSON.stringify({...mastery, ...JSON.parse(localStorage.getItem(masteryKey(id)) || '{}')}));
+        writes.set(masteryKey(id), JSON.stringify({...mastery, ...JSON.parse(store.getItem(masteryKey(id)) || '{}')}));
       }
       writes.set('blanktime:library:v1', JSON.stringify(next));
-      for (const key of writes.keys()) before.set(key, localStorage.getItem(key));
-      for (const [key,value] of writes) localStorage.setItem(key,value);
+      for (const key of writes.keys()) before.set(key, store.getItem(key));
+      for (const [key,value] of writes) store.setItem(key,value);
       refreshCourses(); reloadLearning(); $('backup-status').textContent = '備份已合併，既有理解進度與熟悉度已保留。';
     } catch (e) {
-      for (const [key,value] of before) { try { if(value === null)localStorage.removeItem(key); else localStorage.setItem(key,value); } catch {} }
+      for (const [key,value] of before) { try { if(value === null)store.removeItem(key); else store.setItem(key,value); } catch {} }
       $('backup-status').textContent = '未還原：' + e.message;
     }
   };
@@ -146,5 +147,6 @@
   };
   window.addEventListener('storage', e => { if(e.key?.startsWith('blanktime:learning:progress:')) renderStudy(); });
   window.addEventListener('blanktime:study', () => { try {renderStudy();} catch(e){status(e.message);} });
+  window.addEventListener('blanktime:library-refresh', () => { try { refreshCourses(); } catch(e) { status(e.message); } });
   try {refreshCourses();} catch(e) {status('無法讀取本機資料：' + e.message);}
 })();

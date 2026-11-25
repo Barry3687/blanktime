@@ -1,7 +1,7 @@
 "use strict";
 const core = window.LectureCore;
 let savedProgress;
-try { savedProgress = core.storage(localStorage); }
+try { savedProgress = core.storage(window.BlanktimeStore || localStorage); }
 catch { savedProgress = core.storage(null); }
 const target = document.querySelector("#lesson-content");
 let lesson;
@@ -275,3 +275,5 @@ document.querySelector("#reset-progress").addEventListener("click", () => {
   }
 })();
 
+
+window.addEventListener("blanktime:store-change", event=>{if(event.detail.source === "remote" && lesson)refreshProgress();});

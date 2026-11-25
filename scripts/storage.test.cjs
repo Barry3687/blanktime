@@ -1,0 +1,15 @@
+'use strict';
+const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const values=new Map(),events=[];
+const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k),key:i=>[...values.keys()][i],get length(){return values.size;}};
+const scope={localStorage,document:{querySelectorAll:()=>[]},addEventListener(){},dispatchEvent:event=>events.push(event)};scope.parent=scope;
+const context={window:scope,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}}};vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../assets/storage.js'),'utf8'),context);
+const store=scope.BlanktimeStore,key='blanktime:library:v1',a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
+store.setItem(key,'guest');store.setOwner(a);assert.equal(store.getItem(key),null);store.setItem(key,'account-a');
+store.setOwner(b);assert.equal(store.getItem(key),null);store.setItem(key,'account-b');
+store.setOwner(a);assert.equal(store.getItem(key),'account-a');assert.equal(store.guestItem(key),'guest');
+store.removeItem(key);assert.equal(store.getItem(key),null);store.setOwner(b);assert.equal(store.getItem(key),'account-b');
+store.setOwner(null);assert.equal(store.getItem(key),'guest');assert.throws(()=>store.setOwner('other-user'),/識別碼/);
+assert.equal(events[1].detail.owner,a);assert.equal(events[1].detail.source,'local');
+console.log('PASS: guest/A/B cache isolation, account switching, scoped deletion and owner-tagged change events.');

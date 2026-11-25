@@ -6,13 +6,14 @@ for(const file of files(root).filter(f=>/\.js$/.test(f)))new vm.Script(fs.readFi
 const memory=new Map(),storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
 const context={window:{},localStorage:storage,URLSearchParams,location:{search:''},document:{body:{dataset:{}}},fetch:()=>{throw Error('Unexpected network request');}};
 vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(root,'assets/value.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/package-validator.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(root,'assets/data.js'),'utf8'),context);
 const data=context.window.BlanktimeData,pkg=JSON.parse(fs.readFileSync(path.join(root,'skills/blanktime-study-coach/examples/minimal-package.json'),'utf8'));
 data.importPackage(pkg);data.select(pkg.courseId);
 assert.equal(data.catalog().chapters.length,1);
 storage.setItem('blanktime:learning:progress:'+pkg.courseId,JSON.stringify(['ch01-c01']));
-data.importPackage(pkg);assert.equal(Object.keys(data.library().courses).length,1);assert.equal(data.progress()[0],'ch01-c01');
+data.importPackage(pkg);data.importPackage(JSON.parse(context.window.BlanktimeValue.canonical(pkg)));assert.equal(Object.keys(data.library().courses).length,1);assert.equal(data.progress()[0],'ch01-c01');
 const conflict=structuredClone(pkg);conflict.title='Conflict';assert.throws(()=>data.importPackage(conflict),/相同版本/);
 const upgraded={...pkg,revision:2};data.importPackage(upgraded);assert.equal(data.progress()[0],'ch01-c01');assert.throws(()=>data.importPackage(pkg),/較舊版本/);
 const other={...pkg,courseId:'other-course'};data.importPackage(other);data.select(other.courseId);assert.equal(data.progress().length,0);

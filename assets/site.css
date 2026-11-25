@@ -164,3 +164,42 @@ html,body{margin:0;padding:0;min-height:100%;background:#121c18;color-scheme:dar
 @media(max-width:900px){#blanktime .bt-header{grid-template-columns:auto 1fr;grid-template-areas:"brand timer" "nav nav";gap:3px 8px;padding:5px 12px;}#blanktime .bt-brand{grid-area:brand;font-size:.875rem;}#blanktime .bt-focus-hub{grid-area:timer;justify-self:end;}#blanktime .bt-header nav{grid-area:nav;width:100%;justify-content:space-between;overflow:auto;}#blanktime .bt-header nav button{flex:1;padding:4px 8px;min-height:40px;}#blanktime .bt-focus-hub .bt-focus-tab{min-width:118px;}#blanktime .bt-quick-actions button{padding:4px;font-size:.75rem;}}
 @media(max-width:800px){#learning-frame{height:70dvh;min-height:550px;}#blanktime .bt-import{max-height:none;}#blanktime .bt-focus-panel{height:calc(100dvh - var(--bt-chrome-height,105px));min-height:0;}}
 @media(max-width:370px){#blanktime .bt-brand{font-size:.75rem;letter-spacing:0;}#blanktime .bt-header{padding-inline:6px;}#blanktime .bt-focus-hub .bt-focus-tab{min-width:105px;}#blanktime .bt-header nav button{font-size:.8125rem;}}
+
+.bt-sync-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+#account-dialog{color:#edf5ef;background:#18251e;border:1px solid #537563;border-radius:14px;width:min(520px,calc(100vw - 32px));max-height:85dvh;overflow:auto;padding:24px;font-family:system-ui,sans-serif;}
+#account-dialog::backdrop{background:#07110ccd;}
+#account-dialog .account-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+#account-dialog h2{margin:0;font-size:1.3rem;}
+#account-dialog p{line-height:1.7;overflow-wrap:anywhere;}
+#account-dialog button{font:inherit;color:#edf5ef;background:#294637;border:1px solid #537563;border-radius:7px;padding:10px 14px;min-height:44px;cursor:pointer;margin:6px 6px 6px 0;}
+#account-dialog button:disabled{opacity:.55;cursor:default;}
+#account-dialog [hidden]{display:none!important;}
+#account-status{border-left:3px solid #9fdbba;padding:8px 12px;background:#233a2d;}
+
+#blanktime .planner-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+#blanktime .planner-inline{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+#blanktime .planner-inline button{font-size:.875rem;min-height:36px;padding:4px 9px;border:1px solid var(--bt-line);}
+#blanktime .bt-empty{padding:24px;color:var(--bt-dim);line-height:1.8;}
+#blanktime .bt-event{border:1px solid var(--bt-line);}
+#blanktime .bt-class,#blanktime .bt-study{background:#294637;}#blanktime .bt-task,#blanktime .bt-assignment{background:#29392e;}#blanktime .bt-exam{background:#464032;}#blanktime .bt-meeting{background:#253c36;}#blanktime .bt-holiday{background:#36372b;}
+#blanktime .bt-event.is-completed{opacity:.6;}#blanktime .bt-event.is-completed>strong{text-decoration:line-through;}
+#blanktime .planner-month-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:24px;}
+#blanktime .calendar-cell{display:flex;align-items:flex-start;justify-content:flex-start;flex-direction:column;gap:6px;border:1px solid var(--bt-line);border-radius:0;min-height:110px;padding:10px;text-align:left;overflow-wrap:anywhere;min-width:0;}
+#blanktime .calendar-cell b{font-weight:500;font-size:1rem;}#blanktime .calendar-cell small{display:block;max-width:100%;font-size:.8125rem;line-height:1.45;}
+#blanktime .calendar-cell.weekend{background:#233329;}#blanktime .calendar-cell.outside-month{opacity:.4;}#blanktime .calendar-cell.selected-day{outline:2px solid var(--bt-accent);outline-offset:-2px;background:#304c3b;}#blanktime .calendar-holiday{color:#e5ca8c;}
+#blanktime .bt-plot .bt-empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;}
+#blanktime .bt-dot{transform:translate(-50%,-50%);max-width:140px;overflow:hidden;text-overflow:ellipsis;font-size:.875rem;padding:3px;min-height:32px;}
+.planner-details{border:1px solid #3a5346;border-radius:10px;margin:22px 0;padding:20px;}.planner-details summary{font-size:1.1rem;cursor:pointer;font-weight:600;}
+.planner-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0;}.planner-fields label{display:grid;gap:7px;font-size:.9rem;}
+.planner-fields input,.planner-fields select,dialog textarea{font:inherit;color:#edf5ef;background:#132219;border:1px solid #537563;border-radius:7px;padding:10px;max-width:100%;min-width:0;}
+.planner-check{display:flex;align-items:center;gap:9px;margin:16px 0;}.planner-warning{color:#efcd8e;}
+#plan-preview{max-height:500px;overflow:auto;line-height:1.7;}#plan-preview h4{position:sticky;top:0;margin:10px 0;padding:8px;background:#233a2d;}#plan-preview p{margin:8px 0;}
+#course-list li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #3a5346;}
+#week-list{display:grid;gap:24px;}#week-list section{border:1px solid #3a5346;border-radius:10px;padding:18px;}#week-list h3{margin:0 0 16px;}
+#event-dialog,#course-dialog,#planner-import-dialog{color:#edf5ef;background:#18251e;border:1px solid #537563;border-radius:14px;width:min(640px,calc(100vw - 24px));max-height:90dvh;overflow:auto;padding:24px;font-family:system-ui,sans-serif;}
+#event-dialog::backdrop,#course-dialog::backdrop,#planner-import-dialog::backdrop{background:#07110ccc;}
+.account-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:14px;}
+#event-dialog button,#course-dialog button,#planner-import-dialog button{font:inherit;color:#edf5ef;background:#294637;border:1px solid #537563;border-radius:7px;min-height:44px;padding:9px 14px;cursor:pointer;margin:6px 6px 6px 0;}
+#planner-import-dialog label{display:grid;gap:8px;margin-top:16px;}#planner-import-dialog textarea{width:100%;resize:vertical;}dialog [hidden]{display:none!important;}
+@media(max-width:1000px){#blanktime .planner-month-layout{grid-template-columns:1fr;}#blanktime .calendar-cell{min-height:92px;padding:6px;}}
+@media(max-width:600px){#blanktime .calendar-cell{min-height:75px;padding:6px 3px;}#blanktime .calendar-cell small{font-size:.75rem;}#blanktime .bt-month>span{padding:8px 2px;}#blanktime .planner-heading .bt-intro{margin-bottom:0;}.planner-fields{grid-template-columns:1fr 1fr;}.planner-fields label{font-size:.8125rem;}#event-dialog,#course-dialog,#planner-import-dialog{padding:16px;}}
