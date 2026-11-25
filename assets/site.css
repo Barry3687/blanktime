@@ -144,3 +144,23 @@ html,body{margin:0;padding:0;min-height:100%;background:#121c18;color-scheme:dar
 #materials-workspace .upload-panel{margin-top:24px;border-top:1px solid var(--bt-line);padding-top:20px;}#materials-workspace h2{font-size:1.1rem;}#materials-workspace .drop-zone{display:block;border:1px dashed #6e9c83;margin-top:12px;padding:12px;font-size:.875rem;}#materials-workspace input[type=file]{width:100%;margin-top:12px;}#materials-workspace .file-card{margin-top:18px;border-top:1px solid var(--bt-line);padding-top:14px;overflow-wrap:anywhere;}#materials-workspace .file-preview{white-space:pre-wrap;max-height:260px;overflow:auto;font:inherit;font-size:.875rem;}#materials-workspace .file-image{width:100%;max-height:220px;object-fit:contain;}#materials-workspace .file-pdf{height:300px;}#materials-workspace .consent{display:flex;align-items:baseline;gap:8px;font-size:.875rem;margin:12px 0;}#materials-workspace [hidden]{display:none!important;}
 @media(max-width:1100px){#blanktime .bt-learning-layout{grid-template-columns:minmax(0,1fr) 300px;}#blanktime .bt-split{grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);}#blanktime .bt-header{padding-inline:18px;}}
 @media(max-width:800px){#blanktime .bt-header{align-items:flex-start;gap:12px;}#blanktime .bt-header nav{width:100%;flex-wrap:nowrap;overflow:auto;}#blanktime .bt-header nav button{flex-shrink:0;font-size:.875rem;}#blanktime .bt-body{padding:20px 16px;}#blanktime .bt-split{grid-template-columns:1fr;}#blanktime .bt-agenda li{grid-template-columns:92px 1fr;}#blanktime .bt-agenda time{font-size:.875rem;}#blanktime .bt-learning-layout{display:flex;flex-direction:column;}#learning-frame{height:70dvh;min-height:550px;}#blanktime .bt-import{max-height:none;border-left:0;border-top:1px solid var(--bt-line);}#blanktime .bt-focus-panel{height:calc(100dvh - 182px);min-height:530px;}#blanktime .bt-chapters li{grid-template-columns:95px 1fr;}#blanktime .bt-chapters li button{grid-column:2;}#blanktime .bt-month>div{padding:8px 4px;min-height:80px;}#blanktime .bt-learning-toolbar{padding:12px 16px;}#blanktime .bt-learning-toolbar label{width:100%;}#blanktime .prototype-note{padding:10px 16px;}}
+
+/* Compact shared header: one timer tile, no second toolbar. */
+#blanktime .bt-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;padding:6px 20px;min-height:60px;align-items:center;}
+#blanktime .bt-header nav{justify-content:flex-end;flex-wrap:nowrap;min-width:0;gap:2px;}
+#blanktime .bt-header nav button{padding:6px 12px;font-size:.9rem;white-space:nowrap;}
+#blanktime .bt-brand{font-size:1rem;white-space:nowrap;}
+#blanktime .bt-focus-hub{display:flex;align-items:center;gap:5px;padding:2px 4px;border:1px solid var(--bt-line);border-radius:10px;background:#233c2d;}
+#blanktime .bt-focus-hub .bt-focus-tab{min-width:138px;min-height:44px;padding:4px 8px;gap:1px;}
+#blanktime .bt-focus-title{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--bt-ink);font-size:.875rem;}
+#blanktime .bt-focus-hub [data-timer-state]{font-size:.75rem;}
+#blanktime .bt-quick-actions{display:flex;gap:2px;}
+#blanktime .bt-quick-actions button{min-height:44px;min-width:44px;padding:5px 8px;font-size:.8125rem;}
+#blanktime button:disabled{cursor:default;opacity:.5;}
+#blanktime .bt-focus-panel{height:calc(100dvh - var(--bt-chrome-height,64px));min-height:0;}
+#blanktime .bt-learning-layout{min-height:calc(100dvh - var(--bt-chrome-height,64px) - 78px);}
+#learning-frame{height:calc(100dvh - var(--bt-chrome-height,64px) - 78px);}
+#blanktime .bt-import{max-height:calc(100dvh - var(--bt-chrome-height,64px) - 78px);}
+@media(max-width:900px){#blanktime .bt-header{grid-template-columns:auto 1fr;grid-template-areas:"brand timer" "nav nav";gap:3px 8px;padding:5px 12px;}#blanktime .bt-brand{grid-area:brand;font-size:.875rem;}#blanktime .bt-focus-hub{grid-area:timer;justify-self:end;}#blanktime .bt-header nav{grid-area:nav;width:100%;justify-content:space-between;overflow:auto;}#blanktime .bt-header nav button{flex:1;padding:4px 8px;min-height:40px;}#blanktime .bt-focus-hub .bt-focus-tab{min-width:118px;}#blanktime .bt-quick-actions button{padding:4px;font-size:.75rem;}}
+@media(max-width:800px){#learning-frame{height:70dvh;min-height:550px;}#blanktime .bt-import{max-height:none;}#blanktime .bt-focus-panel{height:calc(100dvh - var(--bt-chrome-height,105px));min-height:0;}}
+@media(max-width:370px){#blanktime .bt-brand{font-size:.75rem;letter-spacing:0;}#blanktime .bt-header{padding-inline:6px;}#blanktime .bt-focus-hub .bt-focus-tab{min-width:105px;}#blanktime .bt-header nav button{font-size:.8125rem;}}

@@ -12,3 +12,11 @@ main{max-width:none;margin-left:230px;padding:24px 30px;}
 .mobile-bar{background:#17251e;}.brand{display:none!important;}
 @media(max-width:1000px){.sidebar{width:190px;padding:18px 14px;}main{margin-left:190px;padding:22px;}}
 @media(max-width:760px){.sidebar{width:100%;}main{margin-left:0;padding:20px 16px;}.mobile-bar{display:flex;}.sidebar:not(.is-open){display:none;}.steps{grid-template-columns:1fr;}}
+
+.learning-stage{margin:28px 0;padding-bottom:22px;border-bottom:1px solid var(--line);}
+.learning-stage>.stage-label{margin:0;color:var(--accent);font-size:.875rem;}
+.learning-stage>h2{font-size:1.35rem;margin:4px 0 18px;}
+.learning-stage .teaching-section{margin:24px 0;}
+.learning-stage .teaching-section h3{font-size:1.1rem;margin-bottom:12px;}
+.learning-stage details{padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;}
+.learning-stage summary,.review-panel>summary{cursor:pointer;font-weight:600;}

@@ -64,7 +64,8 @@ function renderBlock(block, host) {
   }
 }
 function addReview(concept, host) {
-  const panel = element("section", undefined, "review-panel");
+  const panel = element("details", undefined, "review-panel");
+  panel.append(element("summary", "選用：檢查我的解題過程"));
   panel.append(element("h2", "檢查我的解題過程"));
   const input = element("textarea");
   input.id = "derivation"; input.rows = 6; input.maxLength = 6000;
@@ -117,18 +118,30 @@ function renderConcept() {
   document.title = `${concept.title} · 留白日程`;
   if (concept.goal) target.append(element("p", concept.goal, "lead"));
   target.append(element("p", `先備知識：${(concept.prerequisites || []).join("、") || "教材指定的基礎知識"}`, "source-note"));
+  const understanding = element("section", undefined, "learning-stage");
+  understanding.id = "understand";
+  understanding.append(element("p", "先理解觀念", "stage-label"), element("h2", "用白話弄懂它"));
+  const application = element("section", undefined, "learning-stage");
+  application.id = "apply-formula";
+  application.append(element("p", "再學會應用", "stage-label"), element("h2", "公式怎麼用"), element("p", "著重適用情境、符號意義與計算方法；教材來源列在下方。較完整的推導可按需要展開。", "source-note"));
+  let formulaSections = 0;
   for (const section of concept.sections) {
-    const area = element("section", undefined, "teaching-section");
-    area.append(element("h2", section.title));
+    const formulaRelated = /公式|符號|推導|例題|精簡|計算|應用/.test(section.title) || section.blocks.some(b => b.type === "formula");
+    const optionalDerivation = /推導/.test(section.title);
+    if (formulaRelated) formulaSections += 1;
+    const area = element(optionalDerivation ? "details" : "section", undefined, "teaching-section");
+    area.append(element(optionalDerivation ? "summary" : "h3", section.title));
     area.append(element("span", section.origin || "教材整理", "origin-tag"));
     section.blocks.forEach(block => renderBlock(block, area));
-    target.append(area);
+    (formulaRelated ? application : understanding).append(area);
   }
+  if (understanding.children.length > 2) target.append(understanding);
+  if (formulaSections) target.append(application);
   LectureWorkspace.setSubject(concept.subject || lesson.subject);
   const vectorBlock = concept.sections.flatMap(s => s.blocks).find(b => b.type === "diagram" && b.kind === "vector");
   
   const sourcePanel = element("details", undefined, "sources");
-  sourcePanel.append(element("summary", "本觀念的教材來源"));
+  sourcePanel.append(element("summary", "觀念與公式的教材來源"));
   for (const source of lesson.sources.filter(source => concept.sources.includes(source.id))) {
     sourcePanel.append(element("p", [source.title, source.author, source.edition, source.section, source.pages && `頁碼 ${source.pages}`, source.pdfPages && `PDF 第 ${source.pdfPages} 頁`].filter(Boolean).join(" · ")));
     if (source.url && /^https?:\/\//.test(source.url)) {
@@ -137,7 +150,7 @@ function renderConcept() {
   }
   target.append(sourcePanel);
   const quiz = element("section", undefined, "quiz-panel");
-  quiz.append(element("p", "自編練習 · 檢驗剛才的觀念", "eyebrow"), element("h2", "換你試試看"));
+  quiz.append(element("p", "最後做題驗證 · 依匯入教材包出題", "eyebrow"), element("h2", "換你試試看"));
   const form = element("form");
   const fieldset = element("fieldset"); fieldset.append(element("legend", concept.quiz.prompt));
   concept.quiz.options.forEach((option, i) => {

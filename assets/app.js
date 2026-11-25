@@ -58,10 +58,9 @@
     
 
     const frame = document.getElementById('pomodoro-frame');
-    const measureChrome = () => root.style.setProperty('--bt-chrome-height', (root.querySelector('.bt-header').offsetHeight + root.querySelector('.bt-timer-strip').offsetHeight) + 'px');
+    const measureChrome = () => root.style.setProperty('--bt-chrome-height', root.querySelector('.bt-header').offsetHeight + 'px');
     const chromeObserver = new ResizeObserver(measureChrome);
     chromeObserver.observe(root.querySelector('.bt-header'));
-    chromeObserver.observe(root.querySelector('.bt-timer-strip'));
     measureChrome();
     function timerAPI() { return frame.contentWindow?.BlanktimePomodoro; }
     root.querySelector('[data-timer-toggle]').onclick = () => timerAPI()?.toggle();

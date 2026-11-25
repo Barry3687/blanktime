@@ -1,20 +1,16 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="留白日程，結合課表、讀書計畫、逐觀念學習與番茄鐘的期末專案。"><title>留白日程 · Blanktime</title><link rel="stylesheet" href="assets/site.css"></head><body><section id="blanktime" aria-label="留白日程網頁構想">
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="留白日程，結合課表、讀書計畫、逐觀念學習與番茄鐘的期末專案。"><title>留白日程 · Blanktime</title><link rel="stylesheet" href="assets/site.css?v=20261126"></head><body><section id="blanktime" aria-label="留白日程網頁構想">
   <header class="bt-header">
     <div class="bt-brand"><span aria-hidden="true">◷</span> 留白日程</div>
     <nav aria-label="主要頁面">
       <button type="button" data-page="today" aria-pressed="true">今天</button>
       <button type="button" data-page="calendar" aria-pressed="false">行事曆</button>
       <button type="button" data-page="materials" aria-pressed="false">教材與學習</button><button type="button" data-page="study" aria-pressed="false">讀書計畫</button>
-      <button type="button" class="bt-focus-tab" data-page="focus" aria-pressed="false">
-        <span data-timer-state>等待開始</span>番茄鐘
-      </button>
     </nav>
+    <div class="bt-focus-hub" role="group" aria-label="番茄鐘">
+      <button type="button" class="bt-focus-tab" data-page="focus" aria-pressed="false"><span class="bt-focus-title">番茄鐘 <strong data-timer-value>50:00</strong></span><span data-timer-state>載入中</span></button>
+      <div class="bt-quick-actions" aria-label="番茄鐘快速控制"><button type="button" data-timer-toggle disabled>開始</button><button type="button" data-timer-add disabled aria-label="番茄鐘增加一分鐘">＋1 分</button></div>
+    </div>
   </header>
-  <div class="bt-timer-strip" aria-label="番茄鐘快速控制">
-    <span data-timer-state>等待開始</span><strong data-timer-value>50:00</strong>
-    <button type="button" data-timer-toggle>開始</button>
-    <button type="button" data-timer-add>＋1 分鐘</button>
-  </div>
   <p class="prototype-note">行程示範 · 個人行程編輯與自動排程建置中；教材學習與番茄鐘已可使用。</p><div class="bt-body">
     <section data-panel="today">
       <div class="bt-intro"><span>11 月 11 日 · 星期三</span><h2>今天的安排</h2></div>
@@ -81,4 +77,4 @@
 </div>    </section>
     <section data-panel="focus" hidden class="bt-focus-panel"><iframe id="pomodoro-frame" title="番茄鐘與原版窗邊風景" src="modules/pomodoro/index.html?v=20261124-assets" allow="autoplay"></iframe></section>
   </div>
-</section><script src="assets/package-validator.js" defer></script><script src="assets/data.js?v=20261124-assets" defer></script><script src="assets/app.js?v=20261124-assets" defer></script><script src="assets/library.js?v=20261124" defer></script><script src="modules/learning/assets/js/workspace.js" defer></script></body></html>
+</section><script src="assets/package-validator.js" defer></script><script src="assets/data.js?v=20261124-assets" defer></script><script src="assets/app.js?v=20261126" defer></script><script src="assets/library.js?v=20261124" defer></script><script src="modules/learning/assets/js/workspace.js" defer></script></body></html>
