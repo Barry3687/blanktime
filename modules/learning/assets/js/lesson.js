@@ -63,48 +63,16 @@ function renderBlock(block, host) {
     host.append(figure);
   }
 }
-function addReview(concept, host) {
-  const panel = element("details", undefined, "review-panel");
-  panel.append(element("summary", "選用：檢查我的解題過程"));
-  panel.append(element("h2", "檢查我的解題過程"));
-  const input = element("textarea");
-  input.id = "derivation"; input.rows = 6; input.maxLength = 6000;
-  input.placeholder = "寫下你的想法、計算步驟或 LaTeX 公式…";
-  input.value = drafts.get(concept.id) || "";
-  input.addEventListener("input", () => drafts.set(concept.id, input.value));
-  const label = element("label", "你的解題過程"); label.htmlFor = input.id;
-  const consentLabel = element("label", undefined, "consent");
-  const consent = element("input"); consent.type = "checkbox";
-  consentLabel.append(consent, document.createTextNode("同意將本題、相關教材節錄、選擇題答案、文字與算式圖片交給後端模型服務檢查。"));
-  const result = element("div", undefined, "feedback"); result.setAttribute("role", "status");
-  const status = element("p", "正在確認 AI 服務…", "fine-print");
-  const send = button("送出批改", async () => {
-    if (!input.value.trim() && !answerImages.has(concept.id)) { result.textContent = "請輸入解題過程或上傳算式圖片。"; return; }
-    if (!consent.checked) { result.textContent = "請先確認資料傳送說明。"; return; }
-    send.disabled = true; result.textContent = "正在檢查，請保留這個頁面…";
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 65000);
-      let response;
-      try {
-        response = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
-          body: JSON.stringify({ chapter: lesson.id, concept: concept.id, answer: input.value, choice: quizStates.get(concept.id)?.choice ?? null, image: answerImages.get(concept.id) || null }) });
-      } finally { clearTimeout(timer); }
-      const data = await response.json();
-      if (!response.ok) throw Error(data.error || "AI 服務暫時無法使用");
-      result.textContent = `AI 回饋（請配合教材核對）\n\n${data.feedback}`;
-      renderMath(result);
-    } catch (error) {
-      result.textContent = error.name === "AbortError" ? "等待逾時。輸入已保留，可以稍後重試。" : `檢查失敗：${error.message}。輸入已保留。`;
-    } finally { send.disabled = false; }
-  });
-  send.disabled = true;
-  fetch("/api/status").then(response => response.ok ? response.json() : Promise.reject())
-    .then(data => {
-      send.disabled = !data.enabled;
-      status.textContent = data.enabled ? (data.vision ? "AI 文字與圖片批改已啟用。" : "AI 文字批改已啟用；圖片批改需設定視覺模型。") : "AI 檢查尚未啟用，需在本機後端設定金鑰與模型。";
-    }).catch(() => { status.textContent = "此網站尚未連接 AI 後端，仍可閱讀教材、作答與查看解析。"; });
-  panel.append(label, input, LectureWorkspace.screenshotInput(panel, concept.id, answerImages), consentLabel, send, status, result); host.append(panel);
+function addReview(concept,host) {
+  const panel=element('details',undefined,'review-panel'),summary=element('summary','展開：複製去問 ChatGPT／Gemini');summary.setAttribute('aria-expanded','false');panel.append(summary);
+  panel.addEventListener('toggle',()=>{summary.textContent=(panel.open?'收合':'展開')+'：複製去問 ChatGPT／Gemini';summary.setAttribute('aria-expanded',String(panel.open));});
+  const key='blanktime:review-draft:'+BlanktimeData.activeId()+':'+concept.id,store=window.BlanktimeStore||localStorage;
+  const input=element('textarea');input.id='derivation';input.rows=6;input.maxLength=12000;input.placeholder='寫下你的想法、解題步驟與 LaTeX 算式…';
+  try{input.value=drafts.get(concept.id)??store.getItem(key)??'';}catch{input.value=drafts.get(concept.id)||'';}
+  const label=element('label','我的解題步驟與算式草稿');label.htmlFor=input.id;
+  const result=element('p');result.setAttribute('role','status');input.addEventListener('input',()=>{drafts.set(concept.id,input.value);try{store.setItem(key,input.value);}catch{result.textContent='本機空間不足，請先複製草稿保存。';}});
+  const copy=button('一鍵複製題目、答案與步驟',async()=>{const text=BlanktimeStudyTools.reviewPrompt(lesson,concept,quizStates.get(concept.id)?.choice,input.value);try{await navigator.clipboard.writeText(text);result.textContent='已複製，請貼到 ChatGPT／Gemini 對話。網站不會替你傳送內容。';}catch{const fallback=element('textarea');fallback.readOnly=true;fallback.value=text;fallback.rows=10;panel.append(fallback);result.textContent='剪貼簿受限，請從下方文字框手動複製。';}});
+  panel.append(element('p','草稿保存在這個帳號的本機快取。複製內容包含本題、選項、你的答案、步驟、相關公式及來源頁碼。'),label,input,copy,result);host.append(panel);
 }
 function renderConcept() {
   const token = ++renderToken;
@@ -250,7 +218,7 @@ document.querySelector("#menu-toggle").addEventListener("click", e => {
   e.currentTarget.setAttribute("aria-expanded", String(open)); document.querySelector("#sidebar").classList.toggle("is-open", open);
 });
 document.querySelector("#reset-progress").addEventListener("click", () => {
-  if (confirm("要重設這個瀏覽器的全部學習進度嗎？")) { savedProgress.reset(); quizStates.clear(); renderConcept(); }
+  if (confirm("要重設這門課程的理解進度嗎？登入時會同步到其他裝置。")) { savedProgress.reset(); quizStates.clear(); renderConcept(); }
 });
 (async () => {
   try {

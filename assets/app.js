@@ -10,6 +10,7 @@
       for (const button of pages) button.setAttribute("aria-pressed", String(button.dataset.page === page));
       for (const panel of panels) panel.hidden = panel.dataset.panel !== page;
       root.dataset.currentPage = page;
+      window.dispatchEvent(new Event('blanktime:page')); 
       if (page === 'focus') requestAnimationFrame(() => document.getElementById('pomodoro-frame')?.contentWindow?.BlanktimePomodoro?.refresh());
       if (page === 'study') window.dispatchEvent(new Event('blanktime:study'));
     }

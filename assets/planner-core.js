@@ -1,7 +1,7 @@
 (function(scope){
   'use strict';
   const values=scope.BlanktimeValue||(typeof module!=='undefined'?require('./value.js'):null);
-  const TYPES=['task','assignment','report','exam','meeting','study','rest','flex','holiday'];
+  const TYPES=['task','assignment','report','exam','meeting','study','rest','flex','holiday','class'];
   const IMPORTANT=['task','assignment','report','exam','meeting'];
   function dateKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
   function day(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('日期格式錯誤');const [y,m,d]=value.split('-').map(Number),date=new Date(y,m-1,d);if(dateKey(date)!==value)throw Error('日期不存在');return date;}
@@ -26,6 +26,8 @@
     }
     for(const c of state.courses){if(!Number.isInteger(c.weekday)||c.weekday<0||c.weekday>6)throw Error('課表星期錯誤');day(c.from);day(c.to);if(c.to<c.from)throw Error('課表結束日期早於開始');const a=minutes(c.start),b=minutes(c.end);if(a>=b||a%5||b%5)throw Error('課程時間錯誤');if(!Array.isArray(c.exceptions))throw Error('停課日期格式錯誤');c.exceptions.forEach(day);}
     const p=state.prefs;if(!p||!Number.isInteger(p.dayStart)||!Number.isInteger(p.dayEnd)||p.dayStart<0||p.dayEnd>1439||p.dayStart>=p.dayEnd||!Number.isInteger(p.maxStudyMinutes)||p.maxStudyMinutes<30||p.maxStudyMinutes>720||p.maxStudyMinutes%30)throw Error('讀書時段設定錯誤');
+    if(state.deadlines!==undefined&&(!state.deadlines||typeof state.deadlines!=='object'||Array.isArray(state.deadlines)))throw Error('各科期限格式錯誤');
+    for(const d of Object.values(state.deadlines||{}))if(!d||d.at!==null&&!Number.isFinite(Date.parse(d.at))||!Number.isFinite(d.updatedAt))throw Error('各科期限格式錯誤');
     return state;
   }
   function forDay(state,date){
@@ -67,8 +69,8 @@
   function createPlan(state,tasks,from,days=7,now=Date.now()){
     validate(state);day(from);if(days<1||days>14)throw Error('請規劃 1–14 天');
     const unique=new Set();for(const t of tasks){if(!t.id||unique.has(t.id)||!Number.isInteger(t.minutes)||t.minutes<=0||!Array.isArray(t.prerequisites))throw Error('讀書任務資料錯誤');unique.add(t.id);}
-    const remaining=new Map(tasks.map(t=>[t.id,{...t,left:Math.ceil(t.minutes/30)*30}]));
-    const scheduled=new Set(),events=[],warnings=[];
+    const remaining=new Map(tasks.map(t=>[t.id,{...t,left:Math.ceil(remainingMinutes(state,t.id,t.minutes)/30)*30}]));
+    const scheduled=new Set([...remaining.values()].filter(t=>t.left===0).map(t=>t.id)),events=[],warnings=[];
     for(let index=0;index<days;index++){
       const date=addDays(from,index),p=state.prefs;
       const existing=forDay(state,date).filter(e=>e.start&&(e.source!=='plan'||retainPlan(e,now))).map(e=>({start:minutes(e.start),end:minutes(e.end),type:e.type}));
@@ -79,7 +81,7 @@
       let flex=null;
       for(let end=Math.floor(p.dayEnd/30)*30;end-30>=p.dayStart;end-=30){const slot={start:end-30,end};if(stamp(date,slot.start)>=now&&!busy.some(b=>overlaps(slot,b))){flex=put('flex',slot.start,slot.end,'彈性時間・自由運用');break;}}
       if(!flex){warnings.push(`${date} 沒有連續 30 分鐘彈性時間，當天不新增讀書任務。`);continue;}
-      let used=0;
+      let used=existing.filter(e=>e.type==='study').reduce((sum,e)=>sum+e.end-e.start,0);
       for(let start=Math.ceil(p.dayStart/30)*30;start+30<=p.dayEnd&&used<p.maxStudyMinutes;start+=30){
         if(stamp(date,start)<now)continue;
         const candidates=[...remaining.values()].filter(t=>t.left>0&&(!t.from||date>=t.from)&&t.prerequisites.every(id=>!unique.has(id)||scheduled.has(id))).sort((a,b)=>(a.deadline?Date.parse(a.deadline):Infinity)-(b.deadline?Date.parse(b.deadline):Infinity)||(b.importance||0)-(a.importance||0));
@@ -102,7 +104,40 @@
     if(!remote)return validate(local);
     const out=JSON.parse(JSON.stringify(remote));const tombstones=new Set([...(remote.tombstones||[]),...(local.tombstones||[])]);
     for(const kind of ['events','courses']){const rows=new Map(remote[kind].map(x=>[x.id,x]));for(const row of local[kind]){const old=rows.get(row.id);if(old&&!values.equal(old,row)&&old.updatedAt===row.updatedAt)throw Error('行程有同版本衝突');if(!old||(row.updatedAt||0)>=(old.updatedAt||0))rows.set(row.id,row);}out[kind]=[...rows.values()].filter(x=>!tombstones.has(x.id));}
-    out.tombstones=[...tombstones];out.prefs=local.prefs;return validate(out);
+    out.tombstones=[...tombstones];out.prefs=local.prefs;out.deadlines=mergeDeadlines(local,remote);return validate(out);
   }
-  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
+  function remainingMinutes(state,id,total){return Math.max(0,total-state.events.filter(e=>e.taskId===id&&e.source==='plan'&&e.type==='study'&&e.completed&&e.start).reduce((n,e)=>n+minutes(e.end)-minutes(e.start),0));}
+  function mergeDeadlines(local,remote,base){
+    const out={...(remote?.deadlines||{})};
+    for(const [id,value] of Object.entries(local.deadlines||{})){
+      const other=remote?.deadlines?.[id],before=base?.deadlines?.[id];
+      if(base&&other&&!values.equal(other,before)&&!values.equal(value,before)&&!values.equal(value,other))throw Error('同一課程的期限在兩個裝置都有修改');
+      if(!other||value.updatedAt>other.updatedAt)out[id]=value;
+      else if(value.updatedAt===other.updatedAt&&!values.equal(value,other))throw Error('各科期限有同版本衝突');
+    }
+    return out;
+  }
+  function reschedule(state,id,original,date,start,end,now,newId){
+    const out=JSON.parse(JSON.stringify(state)),course=out.courses.find(c=>c.id===id);
+    if(!course||!forDay(out,original).some(c=>c.source==='course'&&c.id===id+'@'+original))throw Error('原日期沒有這門課，請確認星期或停課紀錄');
+    day(date);course.exceptions.push(original);course.updatedAt=now;
+    out.events.push({id:newId,title:course.title+'（調課）',type:'class',source:'user',date,start,end,importance:0,includeCalendar:false,includeMatrix:false,completed:false,updatedAt:now,rescheduledFrom:{courseId:id,date:original}});
+    return validate(out);
+  }
+  function layoutMatrix(items,width,height,now=Date.now()){
+    const placed=[];
+    for(const e of items){const p=priority(e,now),w=Math.min(150,Math.max(72,e.title.length*12+25),width/2-12),h=34;
+      const right=p.urgency>=50,top=p.importance>=50;
+      const xmin=right?width/2+5:4,xmax=(right?width-4:width/2-5)-w,ymin=top?4:height/2+4,ymax=(top?height/2-4:height-4)-h;
+      let x=Math.max(xmin,Math.min(xmax,width*p.urgency/100-w/2)),y=Math.max(ymin,Math.min(ymax,height*(1-p.importance/100)-h/2)),found=false;
+      const fits=(x,y)=>!placed.some(a=>x<a.x+a.w+3&&x+w+3>a.x&&y<a.y+a.h+3&&y+h+3>a.y);
+      found=fits(x,y);
+      const originalY=y;
+      for(let shift=h+5;shift<=height&&!found;shift+=h+5)for(const cy of [originalY+shift,originalY-shift])if(!found&&cy>=ymin&&cy<=ymax&&fits(x,cy)){y=cy;found=true;}
+      if(!found){for(let cy=ymin;cy<=ymax&&!found;cy+=h+5)for(let cx=xmin;cx<=xmax&&!found;cx+=w+5)if(fits(cx,cy)){x=cx;y=cy;found=true;}}
+      placed.push({id:e.id,x,y,w,h,overflow:!found});
+    }
+    return placed;
+  }
+  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge,remainingMinutes,mergeDeadlines,reschedule,layoutMatrix};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

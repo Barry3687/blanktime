@@ -16,6 +16,12 @@
     getItem(key){return scope.localStorage.getItem(prefix()+key);},
     setItem(key,value,source='local'){const old=api.getItem(key);scope.localStorage.setItem(prefix()+key,String(value));if(old!==String(value))emit(key,old,String(value),source);},
     removeItem(key,source='local'){const old=api.getItem(key);scope.localStorage.removeItem(prefix()+key);if(old!==null)emit(key,old,null,source);},
+    batch(entries,source='local'){
+      const before=new Map(entries.map(([key])=>[key,api.getItem(key)]));
+      try{for(const [key,value] of entries){if(value===null)scope.localStorage.removeItem(prefix()+key);else scope.localStorage.setItem(prefix()+key,String(value));}}
+      catch(error){for(const [key,value] of before){if(value===null)scope.localStorage.removeItem(prefix()+key);else scope.localStorage.setItem(prefix()+key,value);}throw error;}
+      for(const [key,value] of entries)if(before.get(key)!==value)emit(key,before.get(key),value,source);
+    },
     guestItem(key){return scope.localStorage.getItem(key);},
     keys(){const p=prefix(),out=[];for(let i=0;i<scope.localStorage.length;i++){const k=scope.localStorage.key(i);if(p&&k.startsWith(p))out.push(k.slice(p.length));else if(!p&&!k.startsWith('blanktime:user:'))out.push(k);}return out;}
   };

@@ -4,37 +4,51 @@
   let connection=null,user=null,epoch=0,ready=false,pulling=false,flushing=false,timerBusy=0;
   let pending={},applying=false,providerReady=false;
   const copy=x=>JSON.parse(JSON.stringify(x));
-  const note=message=>{$('account-status').textContent=message;$('sync-status').textContent=message;$('account-open').title=message;$('account-open').textContent=/未同步|衝突|不足|失效/.test(message)?'同步待處理':'帳號';};
+  let lastSync=null;
+  const note=message=>{
+    const state=/離線/.test(message)?'offline':/訪客|本機預覽/.test(message)?'guest':/^已同步$/.test(message)?'synced':/保存中|同步中|正在/.test(message)?'saving':'attention';
+    if(state==='synced')lastSync=Date.now();
+    $('account-status').textContent=message;$('sync-status').textContent=({offline:'離線',guest:'訪客',synced:'已同步',saving:'保存中',attention:'待處理'})[state];$('sync-status').dataset.state=state;$('sync-status').title=message;
+    $('account-open').title=message;$('account-open').textContent='帳號';
+    window.dispatchEvent(new CustomEvent('blanktime:sync-state',{detail:{state,message,lastSync,email:user?.email||null}}));
+  };
   const pk=id=>'blanktime:learning:progress:'+id, mk=id=>'blanktime:mastery:'+id;
-  const pendingKey='blanktime:sync:pending:v1';
+  const pendingKey='blanktime:sync:pending:v1', C=window.BlanktimeCourseState;
+  const purged=id=>!!window.BlanktimeData?.library().removed?.[id];
+  function sweep(){window.BlanktimeData?.expire?.();for(const [id,doc] of Object.entries(window.BlanktimeData?.library().removed||{}))for(const kind of ['progress','mastery'])if(!pending[kind+':'+id]&&!repository().snapshot(kind,id)?.payload?._coursePurged)queue(kind,id,{_coursePurged:doc.stateId,completed:[],lastId:null},{purge:true});}
+  function applyRows(rows){rows.sort((a,b)=>Number(b.kind==='course')-Number(a.kind==='course')).forEach(apply);sweep();}
   function savePending(){try{store.setItem(pendingKey,JSON.stringify(pending),'internal');}catch{note('本機空間不足，變更尚未同步，請先備份。');}}
   function repository(){return connection.repository;}
   function notifyChanges(){window.dispatchEvent(new Event('blanktime:library-refresh'));}
   function framesReload(){
-    $('learning-frame').src='modules/learning/index.html?v=20261126';
+    $('learning-frame').src='modules/learning/index.html?v=dusk1';
     $('pomodoro-frame').src='modules/pomodoro/index.html?v=cloud1';
     window.LectureWorkspace?.resetMaterials?.();
     notifyChanges();
   }
   function apply(row){
-    if(!row || !user || pending[row.kind+':'+row.document_id])return;
+    if(!row||!user)return;
+    if(row.kind==='course'&&C.status(row.payload)==='purged'){
+      for(const kind of ['course','progress','mastery'])delete pending[kind+':'+row.document_id];savePending();
+    }
+    if(pending[row.kind+':'+row.document_id])return;
     applying=true;
     try {
       if(row.kind==='course') {
-        window.BlanktimeValidate(row.payload);
-        const lib=JSON.parse(store.getItem('blanktime:library:v1')||'{"courses":{}}');
-        if(!window.BlanktimeValue.equal(lib.courses[row.document_id],row.payload)) {
-          lib.courses={...lib.courses,[row.document_id]:row.payload};
-          store.setItem('blanktime:library:v1',JSON.stringify(lib),'remote');
-          $('learning-frame').src='modules/learning/index.html?v=20261126';
+        C.validate(row.payload,window.BlanktimeValidate);
+        const old=C.documents(window.BlanktimeData.library())[row.document_id];
+        if(!window.BlanktimeValue.equal(old,row.payload)) {
+          window.BlanktimeData.putDocument(row.payload,'remote');
+          $('learning-frame').src='modules/learning/index.html?v=dusk1';
         }
       }
       if(row.kind==='progress') {
+        if(purged(row.document_id)){store.removeItem(pk(row.document_id),'remote');store.removeItem(pk(row.document_id)+':last','remote');return;}
         store.setItem(pk(row.document_id),JSON.stringify(row.payload.completed||[]),'remote');
         if(row.payload.lastId)store.setItem(pk(row.document_id)+':last',row.payload.lastId,'remote');
         else store.removeItem(pk(row.document_id)+':last','remote');
       }
-      if(row.kind==='mastery')store.setItem(mk(row.document_id),JSON.stringify(row.payload),'remote');
+      if(row.kind==='mastery'&&!purged(row.document_id))store.setItem(mk(row.document_id),JSON.stringify(row.payload),'remote');
       if(row.kind==='timer' && timerBusy===0)store.setItem('window-seat-pomodoro-v1',JSON.stringify(row.payload),'remote');
       if(row.kind==='schedule'){window.BlanktimePlannerCore.validate(row.payload);store.setItem('blanktime:planner:v1',JSON.stringify(row.payload),'remote');}
     } finally {applying=false;}
@@ -42,7 +56,7 @@
   async function pull(){
     if(!ready||pulling||!navigator.onLine)return;
     const token=epoch;pulling=true;
-    try {const rows=await repository().pull();if(token!==epoch)return;rows.forEach(apply);notifyChanges();if(!Object.keys(pending).length)note('已同步');}
+    try {const rows=await repository().pull();if(token!==epoch)return;applyRows(rows);notifyChanges();if(!Object.keys(pending).length)note('已同步');}
     catch(e){if(token===epoch)note('暫時無法同步；本機資料保留。');}
     finally{if(token===epoch)pulling=false;}
   }
@@ -64,10 +78,10 @@
         const row=await repository().change(item.kind,item.id,remote=>{
           if(token!==epoch)throw Error('帳號已切換');
           if(item.kind==='course') {
-            if(remote && (remote.revision>item.payload.revision || (remote.revision===item.payload.revision&&!window.BlanktimeValue.equal(remote,item.payload))))throw Error('課程版本衝突，請先核對，未覆蓋雲端。');
-            return item.payload;
+return C.resolve(remote,item.payload,item.baseCourse);
           }
           if(item.kind==='progress') {
+            if(item.purge||purged(item.id)||C?.status(repository().snapshot('course',item.id)?.payload)==='purged')return {_coursePurged:item.payload._coursePurged||'purged',completed:[],lastId:null,generation:'purged'};
             if(item.reset) {
               if((repository().snapshot('progress',item.id)?.revision||0)!==item.baseRevision)throw Error('另一台裝置已更新進度，請重新確認重設。');
               return {...item.payload,generation:item.version};
@@ -76,6 +90,7 @@
             return {...api.mergeProgress(item.payload,remote),generation:remote?.generation||'initial'};
           }
           if(item.kind==='mastery') {
+            if(item.purge||purged(item.id)||C?.status(repository().snapshot('course',item.id)?.payload)==='purged')return {_coursePurged:item.payload._coursePurged||'purged'};
             const result={...(remote||{})};
             for(const [chapter,value] of Object.entries(item.patch||item.payload)) {
               if(remote && remote[chapter]!==undefined && remote[chapter]!==item.base?.[chapter] && remote[chapter]!==value)throw Error('章節熟悉度與另一台裝置有衝突，請先核對。');
@@ -88,12 +103,12 @@
             if(remote){for(const kind of ['events','courses'])for(const row of item.payload[kind]){const before=base[kind].find(x=>x.id===row.id),cloud=remote[kind].find(x=>x.id===row.id);if(before&&cloud&&!window.BlanktimeValue.equal(before,row)&&!window.BlanktimeValue.equal(before,cloud)&&!window.BlanktimeValue.equal(row,cloud))throw Error('同一事項在兩台裝置都有修改，請先核對。');}}
             const merged=window.BlanktimePlannerCore.merge(item.payload,remote);
             if(remote&&!window.BlanktimeValue.equal(remote.prefs,base.prefs)){if(!window.BlanktimeValue.equal(item.payload.prefs,base.prefs)&&!window.BlanktimeValue.equal(item.payload.prefs,remote.prefs))throw Error('讀書時段設定有衝突，請先核對。');merged.prefs=remote.prefs;}
-            return merged;
+            merged.deadlines=window.BlanktimePlannerCore.mergeDeadlines(item.payload,remote,base);return merged;
           }
           return item.payload;
         });
         if(token!==epoch)return;
-        if(pending[key]?.version===item.version){delete pending[key];savePending();apply(row);}
+        if(pending[key]?.version===item.version){delete pending[key];savePending();apply(row);if(item.kind==='course')sweep();}
         else if(item.kind==='progress'&&pending[key]){
           // A local edit may arrive while our reset is in flight. Its base is
           // now our acknowledged write, rather than the pre-reset generation.
@@ -112,7 +127,7 @@
     try {
       if(key==='blanktime:library:v1') {
         const lib=JSON.parse(newValue||'{"courses":{}}'),old=JSON.parse(oldValue||'{"courses":{}}');
-        for(const [id,pkg] of Object.entries(lib.courses))if(!window.BlanktimeValue.equal(old.courses[id],pkg))queue('course',id,pkg);
+        for(const [id,doc] of Object.entries(C.documents(lib)))if(!window.BlanktimeValue.equal(C.documents(old)[id],doc))queue('course',id,doc,{baseCourse:pending['course:'+id]?.baseCourse||C.documents(old)[id]||null});
       }
       if(key==='blanktime:planner:v1'&&newValue){const previous=pending['schedule:shared'];queue('schedule','shared',JSON.parse(newValue),{baseState:previous?.baseState||JSON.parse(oldValue||'null')||window.BlanktimePlannerCore.blank()});}
       const progress=key.match(/^blanktime:learning:progress:([a-z0-9-]+)(:last)?$/);
@@ -137,7 +152,7 @@
       if(result.error)throw result.error;return result.data;
     }});
     $('account-name').textContent=user.email||'已登入';$('account-logout').hidden=false;$('account-migrate').hidden=false;
-    try {pending=JSON.parse(store.getItem(pendingKey)||'{}');const rows=await repository().pull();if(token!==epoch)return;ready=true;rows.forEach(apply);framesReload();await flush();note(Object.keys(pending).length?'有變更待同步':'已同步');}
+    try {pending=JSON.parse(store.getItem(pendingKey)||'{}');const rows=await repository().pull();if(token!==epoch)return;ready=true;applyRows(rows);framesReload();await flush();note(Object.keys(pending).length?'有變更待同步':'已同步');}
     catch(e){
       if(token!==epoch)return;
       // Identity is verified, so keep account-scoped offline work queued even
@@ -146,7 +161,7 @@
     }
   }
   window.BlanktimeCloudSession={
-    get signedIn(){return !!user;},get ready(){return ready;},
+    get signedIn(){return !!user;},get ready(){return ready;},get email(){return user?.email||null;},get lastSync(){return lastSync;},async retry(){await pull();await flush();},
     now(){return ready?repository().now():Date.now();},
     async transactTimer(update){
       if(!ready||!navigator.onLine)throw Error('共享計時需連線；請稍後再操作');

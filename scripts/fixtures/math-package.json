@@ -1,0 +1,122 @@
+{
+  "format": "blanktime.study-package/v1",
+  "courseId": "qa-math",
+  "title": "公式驗收（自編測試資料）",
+  "revision": 1,
+  "warnings": [
+    "此範例為自編格式驗收資料，尚未匯入正式網站。"
+  ],
+  "lessons": [
+    {
+      "id": "ch01-ratio",
+      "title": "比例換算",
+      "sources": [
+        {
+          "id": "s1",
+          "title": "自編驗收教材",
+          "pages": "1",
+          "pdfPages": "1"
+        }
+      ],
+      "concepts": [
+        {
+          "id": "ch01-c01",
+          "title": "以固定比例換算數量",
+          "goal": "能由每份數量計算三份的總量。",
+          "prerequisites": [
+            "整數乘法"
+          ],
+          "sources": [
+            "s1"
+          ],
+          "sections": [
+            {
+              "title": "先備複習",
+              "origin": "補充說明",
+              "blocks": [
+                {
+                  "type": "text",
+                  "text": "三份相同數量可以用每份數量乘以 3 計算。"
+                }
+              ]
+            },
+            {
+              "title": "用途與直覺",
+              "origin": "教材整理",
+              "blocks": [
+                {
+                  "type": "text",
+                  "text": "每份有兩顆蘋果，兩份共有四顆。份數增加，每份數量保持相同。"
+                }
+              ]
+            },
+            {
+              "title": "公式與條件",
+              "origin": "教材整理",
+              "blocks": [
+                {
+                  "type": "formula",
+                  "text": "N = nq"
+                },
+                {
+                  "type": "text",
+                  "text": "N 為總顆數，n 為份數，q 為每份顆數。條件是各份數量相同。"
+                }
+              ]
+            },
+            {
+              "title": "必要推導與示範",
+              "origin": "補充說明",
+              "blocks": [
+                {
+                  "type": "text",
+                  "text": "兩份各兩顆，總量為 2 + 2 = 2 × 2 = 4 顆。"
+                }
+              ]
+            },
+            {
+              "title": "考試精簡寫法",
+              "origin": "補充說明",
+              "blocks": [
+                {
+                  "type": "text",
+                  "text": "總量＝份數×每份數量，並標示單位。"
+                }
+              ]
+            }
+          ],
+          "quiz": {
+            "prompt": "每份有 4 顆蘋果，3 份共有幾顆？ 請計算 \\(N=3\\times4\\)。",
+            "options": [
+              "\\(7\\)",
+              "\\(12\\)",
+              "\\(1\\)",
+              "\\(16\\)"
+            ],
+            "answer": 1,
+            "hint": "想想三份各有四顆，要把相同數量加幾次。",
+            "explanations": [
+              "把份數和每份數量相加了。 \\(N=nq\\)。",
+              "3 × 4 = 12 顆。 \\(N=nq\\)。",
+              "相減不符合三份合計的意思。 \\(N=nq\\)。",
+              "這是四份的數量。 \\(N=nq\\)。"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "study": [
+    {
+      "chapterId": "ch01-ratio",
+      "mastery": null,
+      "tasks": [
+        {
+          "conceptId": "ch01-c01",
+          "minutes": 30,
+          "prerequisiteIds": []
+        }
+      ]
+    }
+  ]
+}

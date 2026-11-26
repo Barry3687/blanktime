@@ -13,3 +13,11 @@ store.removeItem(key);assert.equal(store.getItem(key),null);store.setOwner(b);as
 store.setOwner(null);assert.equal(store.getItem(key),'guest');assert.throws(()=>store.setOwner('other-user'),/識別碼/);
 assert.equal(events[1].detail.owner,a);assert.equal(events[1].detail.source,'local');
 console.log('PASS: guest/A/B cache isolation, account switching, scoped deletion and owner-tagged change events.');
+
+store.batch([['batch-a','one'],['batch-b','two']]);assert.equal(store.getItem('batch-b'),'two');
+const priorEvents=events.length,put=localStorage.setItem;let fail=true;
+localStorage.setItem=(k,v)=>{if(k==='batch-b'&&fail){fail=false;throw Error('quota');}return put(k,v);};
+assert.throws(()=>store.batch([['batch-a','changed'],['batch-b','changed']]),/quota/);
+assert.equal(store.getItem('batch-a'),'one');assert.equal(store.getItem('batch-b'),'two');assert.equal(events.length,priorEvents);
+localStorage.setItem=put;
+console.log('PASS: backup batch commit and quota rollback without partial events.');

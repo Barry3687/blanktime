@@ -55,3 +55,11 @@ Google Cloud 專案 Blanktime 已建立。Google Auth Platform 目前停在品�
 ## 最新實際驗收（2026-11-26）
 
 真實 Google 登入已成功；使用兩個獨立資料快取頁面驗證 Supabase 行程新增／完成／移除、教材包、理解進度、熟悉度、共享倒數開始／暫停／重設。這是同一台電腦上的兩個獨立客戶端；手機實機與第二帳號仍待正式驗收。臨時 localhost redirect 已移除，管理頁確認只保留正式 https://barry3687.github.io/blanktime/，Site URL 不變。未讀取密鑰或開通付費服務。早期章節為歷史記錄，以本節與根目錄 README 現況為準。
+
+## 暮光紫藤版本資料相容性
+
+本輪不修改 schema.sql。course 接受原教材包或 blanktime.course-state/v1 生命週期包裝：active、trashed（deletedAt／purgeAt 與教材）、purged（無教材的防復活標記）。啟動／同步自動處理到期，進度與熟悉度在垃圾桶期間保留，永久清除後以原 progress／mastery 類型寫入清除標記。舊裝置的待傳教材不能覆蓋永久清除標記；生命週期操作保留原基底文件 CAS 衝突檢查。
+
+各科 Deadline 位於 schedule.deadlines，沿用 schedule/shared。不同科期限合併，同一科兩台修改則提示核對。備份 v2 不寫入新 kind、不更動共享倒數，只合併既有計時紀錄。
+
+獨立雙客戶端模擬測試已驗證垃圾桶、還原、理解進度、熟悉度、各科期限與調課同步，以及永久清除阻止離線舊教材復活。使用者已回報手機查看正常；此回報與本輪雙實機全面驗收分開記錄。既有 operations 稽核表未清除。

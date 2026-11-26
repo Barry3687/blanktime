@@ -11,10 +11,10 @@
     if (!courses.length) { const o = text('option', '尚未匯入教材'); o.value = ''; select.append(o); }
     for (const pkg of courses) { const o = text('option', pkg.title); o.value = pkg.courseId; select.append(o); }
     if (!courses.some(p => p.courseId === data.activeId()) && courses.length) data.select(courses[0].courseId);
-    select.value = data.activeId(); select.disabled = !courses.length;
+    select.value = data.activeId(); select.disabled = !courses.length;$('course-delete').disabled=!courses.length;
     renderStudy();
   }
-  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=20261126'; }
+  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=dusk1'; }
   $('course-select').onchange = () => {
     try { data.select($('course-select').value); reloadLearning(); renderStudy(); }
     catch (e) { status(e.message); }
@@ -50,7 +50,7 @@
     if (!pending) return;
     try {
       data.importPackage(pending); data.select(pending.courseId);
-      invalidate(); refreshCourses(); reloadLearning();
+      $('package-text').value='';$('package-file').value='';invalidate(); refreshCourses(); reloadLearning();
       status('教材已匯入。可以開始學習，讀書計畫也會顯示章節。');
     } catch (e) { $('package-preview').textContent = '未完成匯入：' + e.message + '。原教材仍保留。'; }
   };
@@ -66,6 +66,12 @@
       const completed = data.progress(pkg.courseId), mastery = JSON.parse(store.getItem(masteryKey(pkg.courseId)) || '{}');
       const section = document.createElement('section'); section.className = 'bt-course-plan';
       section.append(text('h3', pkg.title));
+      const dl=document.createElement('label');dl.textContent='這門課的考試／複習期限';const input=document.createElement('input');input.type='datetime-local';input.setAttribute('aria-label',pkg.title+'考試期限');
+      const at=JSON.parse(store.getItem('blanktime:planner:v1')||'{}').deadlines?.[pkg.courseId]?.at;
+      if(at){const d=new Date(at);input.value=window.BlanktimePlannerCore.dateKey(d)+'T'+window.BlanktimePlannerCore.time(d.getHours()*60+d.getMinutes());}
+      input.onchange=()=>{window.BlanktimePlanner.setDeadline(pkg.courseId,input.value?new Date(input.value).toISOString():null);renderStudy();};dl.append(input);section.append(dl);
+      if(at)section.append(text('p',new Date(at).toLocaleString('zh-TW')+'・'+(window.BlanktimePlanner?.deadlineLabel(at)||'')));
+
       const list = document.createElement('ul'); list.className = 'bt-chapters';
       for (const lesson of pkg.lessons) {
         const item = document.createElement('li'), select = document.createElement('select');
@@ -84,7 +90,7 @@
         const go = text('button', count ? '接續學習' : '開始學習'); go.type = 'button';
         go.onclick = () => {
           data.select(pkg.courseId); refreshCourses();
-          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=20261126#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
+          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=dusk1#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
           document.querySelector('[data-page="materials"]').click();
         };
         item.append(select, info, go); list.append(item);
@@ -93,51 +99,11 @@
     }
     host.append(text('p', '讀書進度與章節熟悉度分開記錄，答對一題不會自動升級。可在上方預覽一週規則排程，確認後加入每日安排。'));
   }
-  function download(value, name) {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], {type:'application/json'}));
-    const link = document.createElement('a'); link.href = url; link.download = name; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  $('library-export').onclick = () => {
-    try {
-      const library = data.library(), progress = {}, mastery = {};
-      for (const pkg of Object.values(library.courses)) {
-        progress[pkg.courseId] = data.progress(pkg.courseId);
-        mastery[pkg.courseId] = JSON.parse(store.getItem(masteryKey(pkg.courseId)) || '{}');
-      }
-      download({format:'blanktime.backup/v1', library, progress, mastery}, 'blanktime-backup.json');
-      status('已匯出教材、理解進度與熟悉度。');
-    } catch (e) { status('備份未完成：' + e.message); }
-  };
-  $('backup-restore').onclick = async () => {
-    const file = $('backup-file').files[0];
-    if (!file) { $('backup-status').textContent = '請先選擇備份。'; return; }
-    const before = new Map();
-    try {
-      if (file.size > 10 * 1024 * 1024) throw Error('備份超過 10 MB。');
-      const backup = JSON.parse(await file.text());
-      if (backup.format !== 'blanktime.backup/v1' || !backup.library?.courses) throw Error('備份格式不符。');
-      const next = data.library(), writes = new Map();
-      for (const [id,pkg] of Object.entries(backup.library.courses)) {
-        window.BlanktimeValidate(pkg);
-        if (id !== pkg.courseId) throw Error('課程識別碼不符。');
-        const old = next.courses[id];
-        if (old && (pkg.revision < old.revision || (pkg.revision === old.revision && !window.BlanktimeValue.equal(pkg,old)))) throw Error('備份與既有教材版本衝突，原資料已保留。');
-        next.courses = {...next.courses, [id]:pkg};
-        const progress = backup.progress?.[id] || [], mastery = backup.mastery?.[id] || {};
-        const ids = new Set(pkg.lessons.flatMap(l => l.concepts.map(c => c.id)));
-        if (!Array.isArray(progress) || progress.some(x => !ids.has(x))) throw Error('進度資料有誤。');
-        if (!mastery || Array.isArray(mastery) || typeof mastery !== 'object' || Object.entries(mastery).some(([k,v]) => !pkg.lessons.some(l => l.id === k) || !['','A','B','C','F'].includes(v))) throw Error('熟悉度資料有誤。');
-        writes.set(progressKey(id), JSON.stringify([...new Set([...data.progress(id), ...progress])]));
-        writes.set(masteryKey(id), JSON.stringify({...mastery, ...JSON.parse(store.getItem(masteryKey(id)) || '{}')}));
-      }
-      writes.set('blanktime:library:v1', JSON.stringify(next));
-      for (const key of writes.keys()) before.set(key, store.getItem(key));
-      for (const [key,value] of writes) store.setItem(key,value);
-      refreshCourses(); reloadLearning(); $('backup-status').textContent = '備份已合併，既有理解進度與熟悉度已保留。';
-    } catch (e) {
-      for (const [key,value] of before) { try { if(value === null)store.removeItem(key); else store.setItem(key,value); } catch {} }
-      $('backup-status').textContent = '未還原：' + e.message;
+  $('library-export').onclick=()=>window.BlanktimeSettings.open('backup');
+  $('course-delete').onclick=()=>{
+    const pkg=data.active();if(!pkg)return;
+    if(confirm('將「'+pkg.title+'」移至垃圾桶？保留 30 天，進度與熟悉度會保留。')){
+      try{data.lifecycle(pkg.courseId,'trash');refreshCourses();reloadLearning();status('已移至垃圾桶，可在設定內還原。');}catch(e){status(e.message);}
     }
   };
   $('copy-prompt').onclick = async () => {

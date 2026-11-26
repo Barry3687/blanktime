@@ -7,10 +7,10 @@ const {randomUUID}=require('node:crypto');
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const settle=async()=>{for(let i=0;i<25;i++)await new Promise(resolve=>setImmediate(resolve));};
-function harness(search=''){
-  const memory=new Map(),listeners=new Map(),nodes=new Map(),rows=new Map(),writes=[];
+function harness(search='',sharedRows=new Map()){
+  const memory=new Map(),listeners=new Map(),nodes=new Map(),rows=sharedRows,writes=[];
   let actor=A,authChange,holdNextPut=null,failReads=false;
-  const node=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',hidden:false,disabled:false,replaceChildren(){},append(){},showModal(){},close(){}});return nodes.get(id);};
+  const node=id=>{if(!nodes.has(id))nodes.set(id,{dataset:{},textContent:'',hidden:false,disabled:false,replaceChildren(){},append(){},showModal(){},close(){}});return nodes.get(id);};
   const window={
     document:{getElementById:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>({})},
     localStorage:{getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key),key:index=>[...memory.keys()][index],get length(){return memory.size;}},
@@ -23,7 +23,7 @@ function harness(search=''){
     CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}},Event:class{constructor(type){this.type=type;}},setInterval(){},setTimeout,
     fetch:async url=>({ok:true,json:async()=>url==='cloud/config.json'?{supabaseUrl:'https://test.supabase.co',publishableKey:'sb_publishable_test',redirectUrl:'https://example.test/'}:{external:{google:true}}})});
   const run=file=>vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context,{filename:file});
-  for(const file of ['assets/value.js','assets/storage.js','assets/planner-core.js','cloud/client.js'])run(file);
+  for(const file of ['assets/value.js','assets/storage.js','assets/planner-core.js','assets/course-state.js','assets/package-validator.js','assets/data.js','cloud/client.js'])run(file);
   const rowKey=(owner,kind,id)=>owner+':'+kind+':'+id;
   const seed=(owner,kind,id,payload,revision=1)=>rows.set(rowKey(owner,kind,id),{user_id:owner,kind,document_id:id,payload:clone(payload),revision});
   const rpc=async(name,args)=>{
@@ -93,6 +93,55 @@ async function main(){
   const expired=harness('?error=invalid_request&error_code=bad_oauth_state');await expired.start();
   assert.match(expired.node('account-status').textContent,/授權已逾時/);
   assert.equal(expired.node('account-login').disabled,false,'a failed callback must still allow a fresh sign-in');
+  // Course lifecycle uses the existing course/progress/mastery document kinds.
+  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'../skills/blanktime-study-coach/examples/minimal-package.json'),'utf8'));
+  const life=harness();life.seed(A,'course',pkg.courseId,pkg);life.seed(A,'progress',pkg.courseId,{completed:['ch01-c01'],lastId:'ch01-c01'});life.seed(A,'mastery',pkg.courseId,{'ch01-ratio':'C'});await life.start();
+  life.window.BlanktimeData.lifecycle(pkg.courseId,'trash');await settle();await life.retry();
+  assert.equal(life.get(A,'course',pkg.courseId).payload.status,'trashed');
+  assert.deepEqual(life.get(A,'progress',pkg.courseId).payload.completed,['ch01-c01']);
+  life.window.BlanktimeData.lifecycle(pkg.courseId,'restore');await settle();await life.retry();
+  assert.equal(life.get(A,'course',pkg.courseId).payload.status,'active');
+  assert.ok(life.window.BlanktimeData.library().courses[pkg.courseId]);
+  const expiredDoc=life.window.BlanktimeCourseState.trash(pkg,Date.now()-31*86400000,randomUUID());
+  const oldCourse=life.get(A,'course',pkg.courseId);life.seed(A,'course',pkg.courseId,expiredDoc,oldCourse.revision+1);
+  await life.retry();await settle();await life.retry();await life.retry();
+  assert.equal(life.get(A,'course',pkg.courseId).payload.status,'purged');
+  assert.equal(life.get(A,'course',pkg.courseId).payload.package,null);
+  assert.ok(life.get(A,'progress',pkg.courseId).payload._coursePurged);
+  assert.ok(life.get(A,'mastery',pkg.courseId).payload._coursePurged);
+  assert.equal(life.window.BlanktimeData.progress(pkg.courseId).length,0);
+  assert.throws(()=>life.window.BlanktimeData.importPackage(pkg),/永久清除/);
+  assert.ok(life.writes.every(w=>['course','progress','mastery','timer','schedule'].includes(w.p_kind)));
+  // Two independent stores/Repositories share only the simulated remote database.
+  const db=new Map(),deviceA=harness('',db),deviceB=harness('',db);
+  deviceA.seed(A,'course',pkg.courseId,pkg);deviceA.seed(A,'progress',pkg.courseId,{completed:['ch01-c01'],lastId:'ch01-c01'});
+  deviceA.seed(A,'mastery',pkg.courseId,{'ch01-ratio':'F'});
+  await deviceA.start();await deviceB.start();
+  deviceA.window.BlanktimeData.lifecycle(pkg.courseId,'trash');await settle();await deviceA.retry();await deviceB.retry();
+  assert.ok(deviceB.window.BlanktimeData.library().trash[pkg.courseId]);
+  assert.deepEqual(Array.from(deviceB.window.BlanktimeData.progress(pkg.courseId)),['ch01-c01']);
+  deviceB.window.BlanktimeData.lifecycle(pkg.courseId,'restore');await settle();await deviceB.retry();await deviceA.retry();
+  assert.ok(deviceA.window.BlanktimeData.library().courses[pkg.courseId]);
+  assert.equal(JSON.parse(deviceA.window.BlanktimeStore.getItem('blanktime:mastery:'+pkg.courseId))['ch01-ratio'],'F');
+  const scheduleKey='blanktime:planner:v1',pa=deviceA.window.BlanktimePlannerCore;
+  let sa=pa.blank();sa.deadlines={[pkg.courseId]:{at:'2026-12-03T10:00:00+08:00',updatedAt:1}};
+  deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(sa));await settle();await deviceA.retry();await deviceB.retry();
+  assert.equal(JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey)).deadlines[pkg.courseId].at,sa.deadlines[pkg.courseId].at);
+  sa=JSON.parse(deviceA.window.BlanktimeStore.getItem(scheduleKey));
+  sa.courses=[{id:'fixed',title:'固定課程',weekday:4,start:'09:00',end:'12:00',from:'2026-11-01',to:'2026-12-31',exceptions:[],skipHolidays:true,updatedAt:1}];
+  sa=pa.reschedule(sa,'fixed','2026-11-26','2026-11-27','10:05','12:05',Date.now(),'makeup');
+  deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(sa));await settle();await deviceA.retry();await deviceB.retry();
+  const sb=JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey));assert.ok(sb.courses[0].exceptions.includes('2026-11-26'));assert.equal(sb.events[0].start,'10:05');
+  deviceB.context.navigator.onLine=false;
+  const stale=clone(pkg);stale.revision=2;deviceB.window.BlanktimeData.importPackage(stale);
+  deviceA.window.BlanktimeData.lifecycle(pkg.courseId,'trash');await settle();await deviceA.retry();
+  deviceA.window.BlanktimeData.lifecycle(pkg.courseId,'purge');await settle();await deviceA.retry();await deviceA.retry();
+  deviceB.context.navigator.onLine=true;await deviceB.retry();await deviceB.retry();
+  assert.ok(deviceB.window.BlanktimeData.library().removed[pkg.courseId]);
+  assert.equal(deviceB.window.BlanktimeData.progress(pkg.courseId).length,0);
+  assert.equal(db.get(A+':course:'+pkg.courseId).payload.status,'purged');
+  assert.equal(JSON.parse(deviceB.window.BlanktimeStore.getItem('blanktime:sync:pending:v1'))['course:'+pkg.courseId],undefined);
+  console.log('PASS: independent device trash/restore/progress/mastery, course deadline and reschedule sync; permanent purge blocks offline stale course updates.');
   console.log('PASS: real account coordinator/storage/repository integration: reset ordering, edits during reset, remote reset conflicts, offline preservation, account isolation and late responses.');
   console.log('Auth/RPC are simulated; actual Google sign-in and physical cross-device checks remain required.');
 }
