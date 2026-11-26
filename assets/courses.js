@@ -34,9 +34,9 @@
   $('course-detail-remove').onclick=async()=>{await app.remove(context.id);if(!course())$('course-detail-dialog').close();};
   function render(){
     const courses=app.read().courses,host=$('course-list');host.replaceChildren();const grid=el('div',undefined,'timetable');grid.setAttribute('role','group');grid.setAttribute('aria-label','每週固定課表');
-    const corner=el('div','時間','tt-corner');grid.append(corner);for(let i=0;i<7;i++){const h=el('div','週'+['一','二','三','四','五','六','日'][i],'tt-heading'+(i>=5?' weekend':''));h.style.gridColumn=i+2;grid.append(h);}
+    const corner=el('div','時間','tt-corner');grid.append(corner);for(let i=0;i<7;i++){const h=el('div','週'+['日','一','二','三','四','五','六'][i],'tt-heading'+([0,6].includes(i)?' weekend':''));h.style.gridColumn=i+2;grid.append(h);}
     const scale=el('div',undefined,'tt-scale');for(let hour=8;hour<=22;hour++){const t=el('span',String(hour).padStart(2,'0')+':00');t.style.top=(hour-8)*60+'px';scale.append(t);}grid.append(scale);
-    for(let i=0;i<7;i++){const col=el('div',undefined,'tt-day'+(i>=5?' weekend':''));col.style.gridColumn=i+2;col.dataset.weekday=(i+1)%7;grid.append(col);}
+    for(let i=0;i<7;i++){const col=el('div',undefined,'tt-day'+([0,6].includes(i)?' weekend':''));col.style.gridColumn=i+2;col.dataset.weekday=i;grid.append(col);}
     for(const p of P.timetable(courses)){const c=courses.find(x=>x.id===p.id),b=button('',()=>open(c.id));b.className='tt-course';b.append(el('strong',c.title),el('span',c.start+'–'+c.end));b.title=c.title+' '+c.start+'–'+c.end;Object.assign(b.style,{top:p.top+'px',height:Math.max(p.height,22)+'px',left:(p.lane/p.lanes*100)+'%',width:(100/p.lanes)+'%'});grid.querySelector('[data-weekday="'+c.weekday+'"]').append(b);}
     host.append(grid);const outside=courses.filter(c=>P.minutes(c.end)<=480||P.minutes(c.start)>=1320);for(const c of outside)host.append(button('08–22 時段外：'+c.title+' '+c.start+'–'+c.end,()=>open(c.id)));if(!courses.length)host.append(el('p','尚未加入固定課表。可手動新增，或先用 ChatGPT／Gemini 整理截圖再匯入。','bt-muted'));
   }

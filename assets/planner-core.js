@@ -156,9 +156,9 @@
   function unfinished(state,now=Date.now()){return state.events.filter(e=>['study','task','assignment','report','exam','meeting'].includes(e.type)&&status(e,now)==='未完成');}
   function deadlineEvents(state,courses={}){return Object.entries(state.deadlines||{}).filter(([id,d])=>d.at&&courses[id]).map(([id,d])=>({id:'deadline:'+id,courseId:id,title:courses[id].title+'・考試／複習期限',date:dateKey(new Date(d.at)),type:'exam',source:'deadline',deadline:d.at,deadlineOnly:true,importance:95,includeCalendar:true,completed:false}));}
   function fullForDay(state,date,courses={}){const rows=forDay(state,date),ids=new Set(rows.map(e=>e.id));return [...rows,...calendarForDay(state,date,courses).filter(e=>!ids.has(e.id))];}
-  function weekStart(date){return addDays(date,-((day(date).getDay()+6)%7));}
+  function weekStart(date){return addDays(date,-day(date).getDay());}
   function timetable(courses){
-    const out=[];for(const c of courses){const start=Math.max(480,minutes(c.start)),end=Math.min(1320,minutes(c.end));if(end>start)out.push({id:c.id,day:(c.weekday+6)%7,top:start-480,height:end-start,lane:0,lanes:1});}
+    const out=[];for(const c of courses){const start=Math.max(480,minutes(c.start)),end=Math.min(1320,minutes(c.end));if(end>start)out.push({id:c.id,day:c.weekday,top:start-480,height:end-start,lane:0,lanes:1});}
     for(let d=0;d<7;d++){const rows=out.filter(x=>x.day===d).sort((a,b)=>a.top-b.top);let group=[],end=-1;const finish=()=>{const lanes=Math.max(1,...group.map(x=>x.lane+1));group.forEach(x=>x.lanes=lanes);};for(const row of rows){if(row.top>=end){finish();group=[];end=-1;}let lane=0;while(group.some(x=>x.lane===lane&&x.top+x.height>row.top))lane++;row.lane=lane;group.push(row);end=Math.max(end,row.top+row.height);}finish();}return out;
   }
   const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge,remainingMinutes,mergeDeadlines,reschedule,layoutMatrix,cancelClass,undoClassChange,markStudy,unfinished,deadlineEvents,fullForDay,weekStart,timetable};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;

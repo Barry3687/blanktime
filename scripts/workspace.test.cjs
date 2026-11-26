@@ -14,7 +14,7 @@ marked=P.markStudy(marked,'study',true,now);assert.equal(P.unfinished(marked,now
 const courses={'demo-ratio':{title:'比例換算'}};state.deadlines={'demo-ratio':{at:'2026-11-26T18:00:00+08:00',updatedAt:now}};
 assert.ok(P.calendarForDay(state,'2026-11-26',courses).some(e=>e.source==='deadline'));
 assert.ok(P.fullForDay(state,'2026-11-26',courses).some(e=>e.source==='course'));assert.ok(P.fullForDay(state,'2026-11-26',courses).some(e=>e.source==='deadline'));
-assert.equal(P.weekStart('2026-11-29'),'2026-11-23');assert.equal(P.weekStart('2026-11-30'),'2026-11-30');
+assert.equal(P.weekStart('2026-11-29'),'2026-11-29');assert.equal(P.weekStart('2026-11-30'),'2026-11-29');
 const layout=P.timetable([...state.courses,{...state.courses[0],id:'second',start:'10:00',end:'11:00'}]);assert.equal(layout[0].top,60);assert.equal(layout[0].height,180);assert.equal(layout[0].lanes,2);assert.notEqual(layout[0].lane,layout[1].lane);
 // Apply all palettes to independent parent/iframe DOM adapters, with text contrast checks.
 const luminance=hex=>{const rgb=hex.match(/\w\w/g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
@@ -31,3 +31,8 @@ for(const file of ['assets/planner.js','assets/library.js','assets/settings.js',
 const backup={format:'blanktime.backup/v2',library:{courses:{}},schedule:state,timerRecords:[],preferences:{font:'standard',reduced:false,theme:'paper'}};B.validate(backup);assert.equal(B.merge(backup,backup).preferences.theme,'paper');assert.throws(()=>B.validate({...backup,preferences:{...backup.preferences,theme:'invalid'}}),/佈景/);
 console.log('PASS: cancellation/reschedule/undo, manual study states and calm notice data, deadlines in month/full week, timetable lanes, seven theme/iframe palettes and contrast, openConcept toolbar notification, no native confirmation/CDN fallback, v2 theme backup compatibility.');
 
+
+assert.equal(P.weekStart('2026-11-28'),'2026-11-22');
+assert.equal(P.weekStart('2027-01-01'),'2026-12-27');
+const weekdays=P.timetable(Array.from({length:7},(_,weekday)=>({...state.courses[0],id:'day-'+weekday,weekday})));assert.deepEqual(weekdays.map(x=>x.day),[0,1,2,3,4,5,6]);
+console.log('PASS: Sunday-first week boundaries across months/years and all seven timetable day mappings.');
