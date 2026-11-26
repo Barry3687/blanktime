@@ -83,3 +83,13 @@ Google Cloud 專案 Blanktime 已實際建立，專案 ID blanktime-515909，無
 使用者回覆設定完成；已從正常 Google UI 確認品牌已建立，OAuth 總覽顯示尚未設定用戶端。已準備 Web OAuth 用戶端表單，尚未按建立：名稱 Blanktime Web，JavaScript origin https://barry3687.github.io，redirect URI https://fnewwyxoqmbylliycelr.supabase.co/auth/v1/callback，AI 代理選項未勾。Chrome tab 1531823897，網址 https://console.cloud.google.com/auth/clients/create?project=blanktime-515909 。
 
 Supabase Google provider 編輯頁也已開好，IAB tab 3，https://supabase.com/dashboard/project/fnewwyxoqmbylliycelr/auth/providers?provider=Google 。Enable Sign in with Google 仍關閉；Client IDs 和 Client Secret 均空，Save 停用；Skip nonce checks／Allow users without an email 保持關閉。接下來交由使用者本人建立憑證，將 ID／Secret 直接貼到 Supabase，開啟 Google 登入並保存。不可讀取或要求密鑰傳入對話；不可操作待接手瀏覽器，等使用者歸還控制。未開通付費服務、未綁帳單。
+
+## Google 已啟用，本機登入驗收待允許回傳網址
+
+已從 Supabase 管理頁 Google ENABLED 與匿名公開 Auth settings googleEnabled=true 確認設定成功，未讀取密鑰。正式 main 仍為 047a67025979fb3a47cbb637029f12cce286bc43；最新開發分支此前為 11bc05e9fd9f92c1e7338eb5aec470f0c7320d96。
+
+新增 scripts/preview-auth.py：只綁定 127.0.0.1:8765，傳回 /cloud/config.json 時覆寫 redirectUrl 為本機精確網址，原檔與正式設定不改。HTTP 記錄移除 query，避免一次性 OAuth code 出現在輸出。伺服器 exec session 45322 仍保留，之後若停掉按同命令重啟。Chrome 真實登入驗收 tab 1531823900，已開啟帳號對話框，Google 登入按鈕已可用，尚未按登入。
+
+Supabase IAB tab 4 已打開 Add new redirect URLs，輸入 http://127.0.0.1:8765/，尚未按 Save URLs。此項新增登入回傳白名單屬安全設定，正等待使用者在對話確認；沒有要求手動接管。取得確認才按保存，驗收完移除這個臨時網址，保留正式網址。不能在正式驗收前合併 main。
+
+本機伺服器路由已用正常 HTTP 驗證，正式 config 未變，公開 Google provider=true，Google SDK 正常載入。node scripts/check.cjs、integration.test.cjs、cloud-app.test.cjs 通過。另修正首頁及讀書計畫底部的過期建置中文字。

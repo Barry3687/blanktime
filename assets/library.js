@@ -91,7 +91,7 @@
       }
       section.append(list); host.append(section);
     }
-    host.append(text('p', '讀書進度與章節熟悉度分開記錄，答對一題不會自動升級。依考試日期自動安排時段的功能仍在建置中。'));
+    host.append(text('p', '讀書進度與章節熟悉度分開記錄，答對一題不會自動升級。可在上方預覽一週規則排程，確認後加入每日安排。'));
   }
   function download(value, name) {
     const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], {type:'application/json'}));
