@@ -40,6 +40,14 @@ assert.equal(core.resumeConcept([chapter], [], "removed-id").concept.id, "ch99-c
 assert.equal(core.resumeConcept([], [], "removed-id"), null);
 progress.reset(); assert.deepEqual(core.storage(mock).completed, []);
 assert.equal(core.storage(mock).lastId, null);
+progress.complete('old-before-remote-reset');
+memory.delete('lecture-step-by-step:progress:v1');
+memory.set('lecture-step-by-step:progress:v1:last','remote-position');
+assert.equal(progress.lastId,'remote-position');
+progress.complete('new-after-remote-reset');
+assert.deepEqual(progress.completed,['new-after-remote-reset'],'an open lesson must not resurrect progress cleared remotely');
+memory.set('lecture-step-by-step:progress:v1','["other-device"]');
+progress.complete('this-device');assert.deepEqual(progress.completed,['other-device','this-device']);
 const blocked = core.storage({ getItem() { throw Error("blocked"); } });
 blocked.complete("ch99-c01"); assert.equal(blocked.available, false);
 assert.deepEqual(blocked.completed, ["ch99-c01"]);

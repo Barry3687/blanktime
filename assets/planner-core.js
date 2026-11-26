@@ -1,5 +1,6 @@
 (function(scope){
   'use strict';
+  const values=scope.BlanktimeValue||(typeof module!=='undefined'?require('./value.js'):null);
   const TYPES=['task','assignment','exam','meeting','study','rest','flex','holiday'];
   function dateKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
   function day(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('日期格式錯誤');const [y,m,d]=value.split('-').map(Number),date=new Date(y,m-1,d);if(dateKey(date)!==value)throw Error('日期不存在');return date;}
@@ -45,7 +46,7 @@
     const scheduled=new Set(),events=[],warnings=[];
     for(let index=0;index<days;index++){
       const date=addDays(from,index),p=state.prefs;
-      const existing=forDay(state,date).filter(e=>e.start&&!e.completed&&e.source!=='plan').map(e=>({start:minutes(e.start),end:minutes(e.end),type:e.type}));
+      const existing=forDay(state,date).filter(e=>e.start&&(e.source!=='plan'||e.completed)).map(e=>({start:minutes(e.start),end:minutes(e.end),type:e.type}));
       const busy=[...existing];
       const put=(type,start,end,title)=>{const event={id:`plan-${date}-${start}-${type}`,title,date,start:time(start),end:time(end),type,source:'plan',importance:0,includeMatrix:false,completed:false};events.push(event);busy.push({start,end,type});return event;};
       // Meal breaks are never inserted over fixed events.
@@ -61,7 +62,7 @@
           const length=Math.min(60,task.left,p.maxStudyMinutes-used),end=start+length;
           if(end+30>p.dayEnd||task.deadline&&stamp(date,end)>Date.parse(task.deadline))continue;
           const work={start,end},rest={start:end,end:end+30};
-          if(busy.some(b=>overlaps(work,b))||busy.some(b=>b.type!=='rest'&&overlaps(rest,b)))continue;
+          if(busy.some(b=>overlaps(work,b))||busy.some(b=>overlaps(rest,b)&&!(b.type==='rest'&&b.start<=rest.start&&b.end>=rest.end)))continue;
           const e=put('study',start,end,task.title);e.id=`plan-${date}-${start}-${task.id}`;e.taskId=task.id;e.courseId=task.courseId||null;e.conceptId=task.conceptId||null;
           if(!busy.some(b=>b.type==='rest'&&b.start<=rest.start&&b.end>=rest.end))put('rest',rest.start,rest.end,'讀書後休息');
           task.left-=length;used+=length;if(task.left===0)scheduled.add(task.id);start=end+30-30;break;
@@ -75,7 +76,7 @@
   function merge(local,remote){
     if(!remote)return validate(local);
     const out=JSON.parse(JSON.stringify(remote));const tombstones=new Set([...(remote.tombstones||[]),...(local.tombstones||[])]);
-    for(const kind of ['events','courses']){const rows=new Map(remote[kind].map(x=>[x.id,x]));for(const row of local[kind]){const old=rows.get(row.id);if(old&&JSON.stringify(old)!==JSON.stringify(row)&&old.updatedAt===row.updatedAt)throw Error('行程有同版本衝突');if(!old||(row.updatedAt||0)>=(old.updatedAt||0))rows.set(row.id,row);}out[kind]=[...rows.values()].filter(x=>!tombstones.has(x.id));}
+    for(const kind of ['events','courses']){const rows=new Map(remote[kind].map(x=>[x.id,x]));for(const row of local[kind]){const old=rows.get(row.id);if(old&&!values.equal(old,row)&&old.updatedAt===row.updatedAt)throw Error('行程有同版本衝突');if(!old||(row.updatedAt||0)>=(old.updatedAt||0))rows.set(row.id,row);}out[kind]=[...rows.values()].filter(x=>!tombstones.has(x.id));}
     out.tombstones=[...tombstones];out.prefs=local.prefs;return validate(out);
   }
   const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,priority,matrix,createPlan,merge};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;

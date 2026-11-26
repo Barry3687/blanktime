@@ -2,9 +2,9 @@
 
 網站：https://barry3687.github.io/blanktime/
 
-## 本輪已完成
+## 開發版現況（尚未合併正式網站）
 
-2026-11-26：上方導覽與番茄鐘合併成單一精簡列，釋出原版番茄鐘的可用畫面。學習頁整理成白話理解、公式應用、驗證題，較長推導及選用批改預設收合。
+2026-11-26：開發分支 codex/cloud-calendar-checkpoint-20261126 已加入實際行事曆、課表和一週規則排程，並接上 Supabase 客戶端。正式 main 仍是先前版本；Google OAuth 與真實雙裝置驗收完成前不合併部署。
 
 - 滿版深綠介面，移除外圍置中卡片與大面積空白。
 - 整合原版番茄鐘，完整保留背景、城市、日夜天氣、聲音、動畫、設定及今日／近七天／歷史次數。頂列和原版共用單一計時狀態，切換頁面與重整持續計時。
@@ -18,9 +18,9 @@
 
 ## 尚未完成
 
-正式版本已確定使用 Google 登入，跨裝置同步整理後的課程、進度、熟悉度，以及同一個番茄鐘倒數與完成紀錄。cloud/ 已有資料庫結構、同步介面、設定範例與驗收說明；尚未接上使用者自己的雲端專案，正式網站仍使用瀏覽器儲存。
+Supabase 專案已建立，schema 已成功執行，回傳網址已設定。Google provider 尚未啟用，仍缺 Google Cloud Web OAuth client 設定；不能宣稱 Google 登入或跨裝置同步已可用。開發版已接上每帳號快取、同步佇列、版本衝突處理及共享倒數，仍需真實登入與雙裝置驗收。
 
-今天與行事曆仍為標示清楚的示範資料。個人行程編輯、課表匯入、假日、提醒、自動排程尚未完成。讀書計畫目前追蹤進度，尚未自動安排時段。後續 AI 排程需先預覽整週，經使用者確認再加入行事曆。
+開發版今天與行事曆讀取使用者實際輸入，支援事項編輯、固定課表、停課日期與課表 JSON 核對匯入。讀書計畫可預覽一週規則排程，確認後加入；保留 30 分鐘以上休息與獨立彈性時間。這是確定性規則排程，沒有即時模型 API。國定假日自動資料與系統通知尚未完成，假日可人工加入。
 
 原版選擇題與數值題可在前端判分。即時 AI 推導／圖片批改未部署後端，介面會說明未連接。舊學習模組 backend/ 僅保留原始程式參考，沒有啟用，GitHub Pages 不執行 Python。
 
@@ -28,7 +28,7 @@
 
 使用 ChatGPT／Gemini 整理教材，不需要網站模型 API。參考 skills/blanktime-study-coach/SKILL.md 與 examples/minimal-package.json，生成教材包後匯入。自編範例不會預先加入正式課程。
 
-教材與進度只存在目前瀏覽器，並非雲端同步；換裝置使用備份。清除網站資料會清除個人內容。原始教材預覽只保留在頁面記憶體，重新整理會清除。公開 Repository 不含私人教材或金鑰。建議一次在一個頁面編輯教材。
+目前正式版與未登入的訪客資料存在目前瀏覽器；Google 尚未啟用，換裝置仍須使用備份。清除網站資料會清除個人內容。原始教材預覽只保留在頁面記憶體，重新整理會清除。公開 Repository 不含私人教材或金鑰。建議一次在一個頁面編輯教材。
 
 ## 驗證
 
@@ -37,6 +37,9 @@
 - node scripts/check.cjs
 - node scripts/integration.test.cjs
 - node scripts/cloud.test.cjs
+- node scripts/cloud-app.test.cjs
+- node scripts/storage.test.cjs
+- node scripts/planner.test.cjs
 - node scripts/cloud-sql.test.cjs（需另安裝 @electric-sql/pglite，或傳入套件的 dist/index.cjs 路徑）
 - node modules/learning/tests/core.test.js
 - node modules/learning/tests/figures.test.js
@@ -45,3 +48,5 @@
 
 原番茄鐘：https://github.com/Barry3687/Pomodoro_Technique_Vibe_Coding
 原逐觀念學習：https://github.com/Barry3687/stepwise-learning
+
+同步整合測試使用真實前端協調程式、儲存層與 Repository，但 Auth／RPC 為模擬服務。涵蓋重設的多鍵事件、重設期間新增進度、另一裝置重設衝突、首次連線失敗後保留變更及帳號切換舊回覆隔離。這不替代真實 Google／雙裝置驗收。

@@ -50,6 +50,9 @@
     if(!ready||applying)return;
     const key=kind+':'+id,old=pending[key],remote=repository().snapshot(kind,id);
     pending[key]={kind,id,payload,version:crypto.randomUUID(),baseGeneration:old?.baseGeneration ?? remote?.payload?.generation ?? 'initial',baseRevision:old?.baseRevision ?? remote?.revision ?? 0,...extra};
+    // Clearing completed IDs and the last lesson are separate storage events.
+    // Keep the reset intent until its write is acknowledged.
+    if(kind==='progress'&&old?.reset)pending[key].reset=true;
     savePending();note('保存中');void flush();
   }
   async function flush(){
@@ -91,6 +94,13 @@
         });
         if(token!==epoch)return;
         if(pending[key]?.version===item.version){delete pending[key];savePending();apply(row);}
+        else if(item.kind==='progress'&&pending[key]){
+          // A local edit may arrive while our reset is in flight. Its base is
+          // now our acknowledged write, rather than the pre-reset generation.
+          pending[key].baseGeneration=row.payload.generation||'initial';
+          pending[key].baseRevision=row.revision;
+          savePending();
+        }
       }
       notifyChanges();note(Object.keys(pending).length?'仍有變更待同步':'已同步');
     }catch(e){if(token===epoch)note('尚未同步：'+e.message);}
@@ -128,7 +138,12 @@
     }});
     $('account-name').textContent=user.email||'已登入';$('account-logout').hidden=false;$('account-migrate').hidden=false;
     try {pending=JSON.parse(store.getItem(pendingKey)||'{}');const rows=await repository().pull();if(token!==epoch)return;ready=true;rows.forEach(apply);framesReload();await flush();note(Object.keys(pending).length?'有變更待同步':'已同步');}
-    catch(e){note('雲端連線未完成：'+e.message);framesReload();}
+    catch(e){
+      if(token!==epoch)return;
+      // Identity is verified, so keep account-scoped offline work queued even
+      // when the initial document fetch fails. Later pulls can safely retry.
+      ready=true;note('雲端連線未完成，本機變更會保留待同步：'+e.message);framesReload();
+    }
   }
   window.BlanktimeCloudSession={
     get signedIn(){return !!user;},get ready(){return ready;},

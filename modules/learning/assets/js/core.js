@@ -99,12 +99,15 @@
     return {
       get available() { return available; },
       get completed() { try { const latest=JSON.parse(storageObject.getItem(KEY)||"[]"); if(Array.isArray(latest))completed=[...new Set(latest.filter(id=>typeof id==="string"))]; } catch {} return [...completed]; },
-      get lastId() { return lastId; },
+      get lastId() { try { lastId=storageObject.getItem(KEY+":last")||null; } catch {} return lastId; },
       visit(id) {
         lastId = id;
         try { storageObject.setItem(KEY + ":last", id); } catch { available = false; }
       },
       complete(id) {
+        // A remote reset or completion may have changed storage since this
+        // lesson opened. Read it again before adding the new result.
+        try { const latest=JSON.parse(storageObject.getItem(KEY)||"[]"); if(Array.isArray(latest))completed=latest.filter(value=>typeof value==="string"); } catch {}
         completed = [...new Set([...completed, id])];
         try { storageObject.setItem(KEY, JSON.stringify(completed)); } catch { available = false; }
       },

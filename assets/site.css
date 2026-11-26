@@ -189,6 +189,8 @@ html,body{margin:0;padding:0;min-height:100%;background:#121c18;color-scheme:dar
 #blanktime .calendar-cell.weekend{background:#233329;}#blanktime .calendar-cell.outside-month{opacity:.4;}#blanktime .calendar-cell.selected-day{outline:2px solid var(--bt-accent);outline-offset:-2px;background:#304c3b;}#blanktime .calendar-holiday{color:#e5ca8c;}
 #blanktime .bt-plot .bt-empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;}
 #blanktime .bt-dot{transform:translate(-50%,-50%);max-width:140px;overflow:hidden;text-overflow:ellipsis;font-size:.875rem;padding:3px;min-height:32px;}
+#blanktime .bt-dot{transform:translate(0,-50%);max-width:46%;white-space:nowrap;}
+#blanktime .bt-dot.label-left{transform:translate(-100%,-50%);}
 .planner-details{border:1px solid #3a5346;border-radius:10px;margin:22px 0;padding:20px;}.planner-details summary{font-size:1.1rem;cursor:pointer;font-weight:600;}
 .planner-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0;}.planner-fields label{display:grid;gap:7px;font-size:.9rem;}
 .planner-fields input,.planner-fields select,dialog textarea{font:inherit;color:#edf5ef;background:#132219;border:1px solid #537563;border-radius:7px;padding:10px;max-width:100%;min-width:0;}
