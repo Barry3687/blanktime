@@ -75,3 +75,11 @@
 已實作 calendarForDay／status／retainPlan：月週日行事曆詳情只列重要事項，今天仍顯示完整安排。新增 report 類別及 includeCalendar 手動選項；截止日與事項日期不同時另顯示截止紀錄，但不建立重複任務。重新產生排程保留已過時段及完成紀錄，不自動挪動。規則測試與本機一般入口已驗證：11/25 09–10 驗收報告維持原時段且標示未完成，月／週不含休息，11/27 正確顯示作業截止。所有驗收資料僅 localhost。
 
 Google Cloud 專案 Blanktime 已實際建立，專案 ID blanktime-515909，無綁定帳單或啟用免費試用。Chrome 已登入使用者 Google 帳號。Google Auth Platform： https://console.cloud.google.com/auth/overview/create?project=blanktime-515909 。應用程式名稱已填「留白日程 Blanktime」，停在支援電子郵件下拉選單，準備讓使用者確認聯絡信箱。尚未提交品牌設定，未建立 OAuth client，未讀取任何 client secret。Chrome tab id 1531823897。接續先等使用者完成並歸還控制，不可操作待接手瀏覽器。
+
+使用者追加明確限制：不能使用需要付費的功能。不得綁信用卡、開通付費方案或到期可能收費的試用；不得使用付費模型 API 或自動升級。免費額度不足改本機／手動／暫停，不付費。此規則已記入 AGENTS.md。Google Auth 支援信箱仍待使用者接手完成；本輪未操作瀏覽器。
+
+## Google Auth 品牌設定完成，等待憑證手動接線
+
+使用者回覆設定完成；已從正常 Google UI 確認品牌已建立，OAuth 總覽顯示尚未設定用戶端。已準備 Web OAuth 用戶端表單，尚未按建立：名稱 Blanktime Web，JavaScript origin https://barry3687.github.io，redirect URI https://fnewwyxoqmbylliycelr.supabase.co/auth/v1/callback，AI 代理選項未勾。Chrome tab 1531823897，網址 https://console.cloud.google.com/auth/clients/create?project=blanktime-515909 。
+
+Supabase Google provider 編輯頁也已開好，IAB tab 3，https://supabase.com/dashboard/project/fnewwyxoqmbylliycelr/auth/providers?provider=Google 。Enable Sign in with Google 仍關閉；Client IDs 和 Client Secret 均空，Save 停用；Skip nonce checks／Allow users without an email 保持關閉。接下來交由使用者本人建立憑證，將 ID／Secret 直接貼到 Supabase，開啟 Google 登入並保存。不可讀取或要求密鑰傳入對話；不可操作待接手瀏覽器，等使用者歸還控制。未開通付費服務、未綁帳單。
