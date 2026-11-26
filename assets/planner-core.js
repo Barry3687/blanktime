@@ -1,7 +1,8 @@
 (function(scope){
   'use strict';
   const values=scope.BlanktimeValue||(typeof module!=='undefined'?require('./value.js'):null);
-  const TYPES=['task','assignment','exam','meeting','study','rest','flex','holiday'];
+  const TYPES=['task','assignment','report','exam','meeting','study','rest','flex','holiday'];
+  const IMPORTANT=['task','assignment','report','exam','meeting'];
   function dateKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
   function day(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('日期格式錯誤');const [y,m,d]=value.split('-').map(Number),date=new Date(y,m-1,d);if(dateKey(date)!==value)throw Error('日期不存在');return date;}
   function addDays(value,n){const d=day(value);d.setDate(d.getDate()+n);return dateKey(d);}
@@ -20,6 +21,7 @@
       if(['rest','flex'].includes(e.type)&&e.start&&minutes(e.end)-minutes(e.start)<30)throw Error('休息與彈性時間至少 30 分鐘');
       if(!Number.isFinite(e.importance)||e.importance<0||e.importance>100)throw Error('重要程度須介於 0–100');
       if(e.deadline&&!Number.isFinite(Date.parse(e.deadline)))throw Error('截止時間錯誤');
+      if(e.includeCalendar!==undefined&&typeof e.includeCalendar!=='boolean')throw Error('重要行事曆選項錯誤');
       if(e.estimate!==undefined&&(!Number.isFinite(e.estimate)||e.estimate<=0||e.estimate>1440))throw Error('預估工時錯誤');
     }
     for(const c of state.courses){if(!Number.isInteger(c.weekday)||c.weekday<0||c.weekday>6)throw Error('課表星期錯誤');day(c.from);day(c.to);if(c.to<c.from)throw Error('課表結束日期早於開始');const a=minutes(c.start),b=minutes(c.end);if(a>=b||a%5||b%5)throw Error('課程時間錯誤');if(!Array.isArray(c.exceptions))throw Error('停課日期格式錯誤');c.exceptions.forEach(day);}
@@ -31,6 +33,29 @@
     const events=state.events.filter(e=>e.date===date).map(e=>({...e}));
     for(const c of state.courses){if(date>=c.from&&date<=c.to&&day(date).getDay()===c.weekday&&!c.exceptions.includes(date)&&!(holiday&&c.skipHolidays))events.push({...c,id:c.id+'@'+date,date,type:'class',source:'course'});}
     return events.sort((a,b)=>(a.start?minutes(a.start):-1)-(b.start?minutes(b.start):-1));
+  }
+  function isCalendarEvent(event){
+    if(['rest','flex','holiday','class'].includes(event.type))return false;
+    return event.includeCalendar??(event.source==='user'&&IMPORTANT.includes(event.type));
+  }
+  function calendarForDay(state,date){
+    // A task may be planned on one day but due on another. Show its deadline
+    // on the actual due date as well, without creating a second stored task.
+    return state.events.filter(isCalendarEvent).flatMap(event=>{
+      if(event.date===date)return [{...event}];
+      if(event.deadline&&dateKey(new Date(event.deadline))===date)return [{...event,deadlineOnly:true}];
+      return [];
+    }).sort((a,b)=>(a.deadlineOnly?Date.parse(a.deadline):a.start?stamp(a.date,minutes(a.start)):day(date).getTime())-(b.deadlineOnly?Date.parse(b.deadline):b.start?stamp(b.date,minutes(b.start)):day(date).getTime()));
+  }
+  function status(event,now=Date.now()){
+    if(![...IMPORTANT,'study'].includes(event.type))return null;
+    if(event.completed)return '已完成';
+    const end=event.end?stamp(event.date,minutes(event.end)):null;
+    if(end!==null&&end<=now||event.deadline&&Date.parse(event.deadline)<=now||!event.end&&!event.deadline&&event.date<dateKey(new Date(now)))return '未完成';
+    return null;
+  }
+  function retainPlan(event,now=Date.now()){
+    return event.completed===true||!!event.end&&stamp(event.date,minutes(event.end))<=now;
   }
   function priority(event,now=Date.now()){
     const hours=event.deadline?(Date.parse(event.deadline)-now)/3600000:Infinity;
@@ -46,7 +71,7 @@
     const scheduled=new Set(),events=[],warnings=[];
     for(let index=0;index<days;index++){
       const date=addDays(from,index),p=state.prefs;
-      const existing=forDay(state,date).filter(e=>e.start&&(e.source!=='plan'||e.completed)).map(e=>({start:minutes(e.start),end:minutes(e.end),type:e.type}));
+      const existing=forDay(state,date).filter(e=>e.start&&(e.source!=='plan'||retainPlan(e,now))).map(e=>({start:minutes(e.start),end:minutes(e.end),type:e.type}));
       const busy=[...existing];
       const put=(type,start,end,title)=>{const event={id:`plan-${date}-${start}-${type}`,title,date,start:time(start),end:time(end),type,source:'plan',importance:0,includeMatrix:false,completed:false};events.push(event);busy.push({start,end,type});return event;};
       // Meal breaks are never inserted over fixed events.
@@ -79,5 +104,5 @@
     for(const kind of ['events','courses']){const rows=new Map(remote[kind].map(x=>[x.id,x]));for(const row of local[kind]){const old=rows.get(row.id);if(old&&!values.equal(old,row)&&old.updatedAt===row.updatedAt)throw Error('行程有同版本衝突');if(!old||(row.updatedAt||0)>=(old.updatedAt||0))rows.set(row.id,row);}out[kind]=[...rows.values()].filter(x=>!tombstones.has(x.id));}
     out.tombstones=[...tombstones];out.prefs=local.prefs;return validate(out);
   }
-  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,priority,matrix,createPlan,merge};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
+  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

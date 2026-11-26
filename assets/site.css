@@ -183,6 +183,9 @@ html,body{margin:0;padding:0;min-height:100%;background:#121c18;color-scheme:dar
 #blanktime .bt-event{border:1px solid var(--bt-line);}
 #blanktime .bt-class,#blanktime .bt-study{background:#294637;}#blanktime .bt-task,#blanktime .bt-assignment{background:#29392e;}#blanktime .bt-exam{background:#464032;}#blanktime .bt-meeting{background:#253c36;}#blanktime .bt-holiday{background:#36372b;}
 #blanktime .bt-event.is-completed{opacity:.6;}#blanktime .bt-event.is-completed>strong{text-decoration:line-through;}
+#blanktime .planner-state{font-size:.8125rem;color:var(--bt-dim);}
+#blanktime .planner-state.is-unfinished{color:#efcd8e;font-weight:600;}
+#blanktime .bt-report{background:#29392e;}
 #blanktime .planner-month-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:24px;}
 #blanktime .calendar-cell{display:flex;align-items:flex-start;justify-content:flex-start;flex-direction:column;gap:6px;border:1px solid var(--bt-line);border-radius:0;min-height:110px;padding:10px;text-align:left;overflow-wrap:anywhere;min-width:0;}
 #blanktime .calendar-cell b{font-weight:500;font-size:1rem;}#blanktime .calendar-cell small{display:block;max-width:100%;font-size:.8125rem;line-height:1.45;}

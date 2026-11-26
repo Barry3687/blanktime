@@ -47,3 +47,5 @@ blanktime_documents 存 course、progress、mastery、timer、schedule 五類資
 ## 帳號協調整合測試
 
 node scripts/cloud-app.test.cjs 實際載入 storage.js、cloud/client.js 與 cloud-app.js，模擬身份與 RPC，驗證進度重設期間的多次儲存事件、離線佇列、遠端重設衝突、首次拉取失敗後恢復，以及帳號切換後的延遲回覆。沒有建立任何正式測試帳號或繞過 Google 登入。
+
+Google Cloud 專案 Blanktime 已建立。Google Auth Platform 目前停在品牌設定第一步（應用程式名稱已填，待使用者選擇支援聯絡信箱），尚未建立 OAuth client 或取得 client secret，也尚未啟用 Supabase Google provider。

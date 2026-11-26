@@ -67,3 +67,11 @@
 ## 重要使用者偏好
 
 問題直接在對話問，不要使用問卷小視窗。網站滿版、深綠、資訊密集但重點先顯示；小頂列、原版番茄鐘背景保留；一天安排全顯示。教學白話→公式用法／簡要符號與來源→題目。Google 登入、只同步整理後課程，手機與電腦同一倒數和紀錄。AI 排程須先預覽確認。使用者要求保留約 10% 額度；模型不能讀取實際帳號額度。
+
+## 重要行事曆與 Google 設定續作
+
+使用者已回答：未完成時段保留並標示；月曆只留作業、報告、期中考等重要事項，午晚餐休息不列其中；沒有 Google Cloud 專案。
+
+已實作 calendarForDay／status／retainPlan：月週日行事曆詳情只列重要事項，今天仍顯示完整安排。新增 report 類別及 includeCalendar 手動選項；截止日與事項日期不同時另顯示截止紀錄，但不建立重複任務。重新產生排程保留已過時段及完成紀錄，不自動挪動。規則測試與本機一般入口已驗證：11/25 09–10 驗收報告維持原時段且標示未完成，月／週不含休息，11/27 正確顯示作業截止。所有驗收資料僅 localhost。
+
+Google Cloud 專案 Blanktime 已實際建立，專案 ID blanktime-515909，無綁定帳單或啟用免費試用。Chrome 已登入使用者 Google 帳號。Google Auth Platform： https://console.cloud.google.com/auth/overview/create?project=blanktime-515909 。應用程式名稱已填「留白日程 Blanktime」，停在支援電子郵件下拉選單，準備讓使用者確認聯絡信箱。尚未提交品牌設定，未建立 OAuth client，未讀取任何 client secret。Chrome tab id 1531823897。接續先等使用者完成並歸還控制，不可操作待接手瀏覽器。
