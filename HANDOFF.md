@@ -93,3 +93,19 @@ Supabase Google provider 編輯頁也已開好，IAB tab 3，https://supabase.co
 Supabase IAB tab 4 已打開 Add new redirect URLs，輸入 http://127.0.0.1:8765/，尚未按 Save URLs。此項新增登入回傳白名單屬安全設定，正等待使用者在對話確認；沒有要求手動接管。取得確認才按保存，驗收完移除這個臨時網址，保留正式網址。不能在正式驗收前合併 main。
 
 本機伺服器路由已用正常 HTTP 驗證，正式 config 未變，公開 Google provider=true，Google SDK 正常載入。node scripts/check.cjs、integration.test.cjs、cloud-app.test.cjs 通過。另修正首頁及讀書計畫底部的過期建置中文字。
+
+## 本機回傳網址已獲授權並保存，等使用者選 Google 帳號
+
+使用者明確同意臨時增加 localhost redirect。Supabase URL Configuration 已從正常 UI 確認 Total URLs: 2，包含正式 GitHub Pages 網址及 http://127.0.0.1:8765/。原 Site URL 保持正式網址。原先 Playwright fill 後保存未出現在清單，改用 native typeText 加 Tab、保存後 waitFor 精確網址可見，已確認成功。測試結束仍須移除臨時網址。
+
+Chrome tab 1531823900 已由正常網站按 Google 登入，進入 accounts.google.com 的多帳號選擇頁。自動審查拒絕代選特定帳號，理由為使用者尚未指定要用哪一個，多帳號選錯會讓同步資料綁錯身份。未繞過拒絕，將交接讓使用者自行選擇並完成登入。身份選擇前無任何雲端驗收寫入。IAB Supabase tab 4 保留；本機 server 45322 待續。
+
+## 真實登入、雲端驗收與即時解析已完成
+
+使用者手動完成 Google 帳號選擇後，Chrome localhost 帳號頁顯示已登入及已同步。scripts/preview-auth.py 新增隔離驗收入口 ?isolatedQa=1，僅本機回應的 storage.js 使用 sessionStorage，身份驗證仍由原 SDK 正常處理，不複製或讀取 token。Chrome 主頁 1531823900、隔離頁 1531823911 已驗證：09:05–10:05 報告真實同步，反向完成同步；番茄鐘開始後另一頁收到49:53倒數，另一頁暫停原頁收到49:48，重設同步回50:00；自編 demo-ratio 教材、1/1理解進度、C熟悉度同步成功。驗收報告已從正常入口移除，兩頁都空；番茄鐘已重設。demo-ratio 自編範例及其進度仍保留於登入帳號，不含私人教材。
+
+使用者追加作答後立即顯示解析：lesson.js 已移除查看完整解析按鈕，任一有效作答都顯示正解及全部選項解析。實際以A答錯、B答對兩條路徑驗收；作答前 solutionVisible=false，兩次作答後皆true；未自動調整C熟悉度。更新教材HTML、JS及動態章節連結版本為20261126以避開舊頁快取。登入逾時改為白話提示並保留重新登入入口。
+
+390px手機版根頁 clientWidth/scrollWidth均375，教材iframe均360，未橫向溢出，已還原viewport。沒有 Uncaught 錯誤。9組自動檢查全部通過。本次仍是同電腦兩獨立客戶端，手機實機、第二帳號、真實專注完成長時間雙裝置計數未測，不得過度宣稱。
+
+Supabase IAB tab4已移除臨時localhost redirect，UI顯示Successfully removed、Total URLs:1，只剩正式GitHubPages網址，Site URL未變。local server session96944尚在；隔離頁已關閉。準備將候選版本儲存到開發分支並fast-forward main，接著驗證GitHubPages實際發布結果。

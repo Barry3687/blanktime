@@ -7,7 +7,7 @@ const {randomUUID}=require('node:crypto');
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const settle=async()=>{for(let i=0;i<25;i++)await new Promise(resolve=>setImmediate(resolve));};
-function harness(){
+function harness(search=''){
   const memory=new Map(),listeners=new Map(),nodes=new Map(),rows=new Map(),writes=[];
   let actor=A,authChange,holdNextPut=null,failReads=false;
   const node=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',hidden:false,disabled:false,replaceChildren(){},append(){},showModal(){},close(){}});return nodes.get(id);};
@@ -19,7 +19,7 @@ function harness(){
     BlanktimeValidate(){},LectureWorkspace:{resetMaterials(){}},
   };
   window.parent=window;
-  const context=vm.createContext({window,document:window.document,navigator:{onLine:true},location:{origin:'https://example.test',pathname:'/'},crypto:{randomUUID},URL,console,
+  const context=vm.createContext({window,document:window.document,navigator:{onLine:true},location:{origin:'https://example.test',pathname:'/',search},crypto:{randomUUID},URL,URLSearchParams,console,
     CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}},Event:class{constructor(type){this.type=type;}},setInterval(){},setTimeout,
     fetch:async url=>({ok:true,json:async()=>url==='cloud/config.json'?{supabaseUrl:'https://test.supabase.co',publishableKey:'sb_publishable_test',redirectUrl:'https://example.test/'}:{external:{google:true}}})});
   const run=file=>vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context,{filename:file});
@@ -90,6 +90,9 @@ async function main(){
   assert.ok(JSON.parse(offline.window.BlanktimeStore.getItem('blanktime:sync:pending:v1'))['progress:course-a'],'initial pull failure must not discard subsequent edits');
   offline.failReads(false);offline.context.navigator.onLine=true;await offline.retry();
   assert.deepEqual(offline.get(A,'progress','course-a').payload.completed,['saved-during-outage']);
+  const expired=harness('?error=invalid_request&error_code=bad_oauth_state');await expired.start();
+  assert.match(expired.node('account-status').textContent,/授權已逾時/);
+  assert.equal(expired.node('account-login').disabled,false,'a failed callback must still allow a fresh sign-in');
   console.log('PASS: real account coordinator/storage/repository integration: reset ordering, edits during reset, remote reset conflicts, offline preservation, account isolation and late responses.');
   console.log('Auth/RPC are simulated; actual Google sign-in and physical cross-device checks remain required.');
 }

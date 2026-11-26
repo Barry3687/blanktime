@@ -29,7 +29,7 @@
   }
   function catalog() {
     const pkg = active();
-    return {version:1, chapters: (pkg?.lessons || []).map(lesson => ({id:lesson.id, title:lesson.title, path:`chapters/lesson.html?chapter=${encodeURIComponent(lesson.id)}&v=20261124`, concepts:lesson.concepts.map(c => ({id:c.id,title:c.title}))}))};
+    return {version:1, chapters: (pkg?.lessons || []).map(lesson => ({id:lesson.id, title:lesson.title, path:`chapters/lesson.html?chapter=${encodeURIComponent(lesson.id)}&v=20261126`, concepts:lesson.concepts.map(c => ({id:c.id,title:c.title}))}))};
   }
   async function json(path) {
     const pkg = active();

@@ -11,7 +11,7 @@
   function repository(){return connection.repository;}
   function notifyChanges(){window.dispatchEvent(new Event('blanktime:library-refresh'));}
   function framesReload(){
-    $('learning-frame').src='modules/learning/index.html?v=cloud1';
+    $('learning-frame').src='modules/learning/index.html?v=20261126';
     $('pomodoro-frame').src='modules/pomodoro/index.html?v=cloud1';
     window.LectureWorkspace?.resetMaterials?.();
     notifyChanges();
@@ -26,7 +26,7 @@
         if(!window.BlanktimeValue.equal(lib.courses[row.document_id],row.payload)) {
           lib.courses={...lib.courses,[row.document_id]:row.payload};
           store.setItem('blanktime:library:v1',JSON.stringify(lib),'remote');
-          $('learning-frame').src='modules/learning/index.html?v=cloud1';
+          $('learning-frame').src='modules/learning/index.html?v=20261126';
         }
       }
       if(row.kind==='progress') {
@@ -196,6 +196,11 @@
     }catch(e){note('合併尚未完成：'+e.message);}
   };
   async function start(){
+    const callback=new URLSearchParams(location.search||'');
+    const callbackError=callback.get('error_code')||callback.get('error');
+    const callbackNote=/bad_oauth_state|flow_state_expired|flow_state_not_found/.test(callbackError||'')
+      ?'登入授權已逾時，請重新按「使用 Google 登入」並完成帳號選擇。'
+      :'Google 登入未完成，請重新按「使用 Google 登入」。';
     try{
       const response=await fetch('cloud/config.json');if(!response.ok)throw Error('雲端設定尚未完成');const config=await response.json();
       if(location.origin+location.pathname!==config.redirectUrl){note('本機預覽模式・未連接雲端');$('account-login').textContent='請在正式網站登入';return;}
@@ -207,7 +212,8 @@
       await activate(data.session);
       connection.client.auth.onAuthStateChange((event,session)=>{if(event!=='INITIAL_SESSION'&&event!=='TOKEN_REFRESHED')setTimeout(()=>activate(session).catch(e=>note(e.message)),0);});
       if(!providerReady)$('account-setup-note').textContent='私人資料庫已連接，Google 授權設定尚未完成。現在仍可用訪客模式。';
-    }catch(e){note('同步未啟用：'+e.message);}
+      if(callbackError)note(callbackNote);
+    }catch(e){note(callbackError?callbackNote:'同步未啟用：'+e.message);}
   }
   window.addEventListener('online',()=>{void pull().then(flush);});
   window.addEventListener('offline',()=>note('離線・課程可閱讀，共享計時暫時無法操作'));
