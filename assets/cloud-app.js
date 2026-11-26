@@ -4,7 +4,7 @@
   let connection=null,user=null,epoch=0,ready=false,pulling=false,flushing=false,timerBusy=0;
   let pending={},applying=false,providerReady=false;
   const copy=x=>JSON.parse(JSON.stringify(x));
-  let lastSync=null;
+  let lastSync=null,identityResolved=false;
   const note=message=>{
     const state=/離線/.test(message)?'offline':/訪客|本機預覽/.test(message)?'guest':/^已同步$/.test(message)?'synced':/保存中|同步中|正在/.test(message)?'saving':'attention';
     if(state==='synced')lastSync=Date.now();
@@ -21,7 +21,7 @@
   function repository(){return connection.repository;}
   function notifyChanges(){window.dispatchEvent(new Event('blanktime:library-refresh'));}
   function framesReload(){
-    $('learning-frame').src='modules/learning/index.html?v=workspace2';
+    $('learning-frame').src='modules/learning/index.html?v=fouc1';
     $('pomodoro-frame').src='modules/pomodoro/index.html?v=cloud1';
     window.LectureWorkspace?.resetMaterials?.();
     notifyChanges();
@@ -39,7 +39,7 @@
         const old=C.documents(window.BlanktimeData.library())[row.document_id];
         if(!window.BlanktimeValue.equal(old,row.payload)) {
           window.BlanktimeData.putDocument(row.payload,'remote');
-          $('learning-frame').src='modules/learning/index.html?v=workspace2';
+          $('learning-frame').src='modules/learning/index.html?v=fouc1';
         }
       }
       if(row.kind==='progress') {
@@ -137,14 +137,14 @@ return C.resolve(remote,item.payload,item.baseCourse);
     }catch(e){note('本機內容已保留，尚未同步：'+e.message);}
   });
   async function activate(session){
-    const token=++epoch;ready=false;user=null;pending={};flushing=false;pulling=false;timerBusy=0;
+    const token=++epoch;identityResolved=false;ready=false;user=null;pending={};flushing=false;pulling=false;timerBusy=0;
     store.setOwner(null);framesReload();
     repository().documents.clear();
-    if(!session){store.setOwner(null);$('account-name').textContent='尚未登入';$('account-logout').hidden=true;$('account-migrate').hidden=true;note('訪客模式・僅存於此瀏覽器');framesReload();return;}
+    if(!session){identityResolved=true;store.setOwner(null);$('account-name').textContent='尚未登入';$('account-logout').hidden=true;$('account-migrate').hidden=true;note('訪客模式・僅存於此瀏覽器');framesReload();return;}
     note('正在確認帳號');
     const verified=await connection.client.auth.getUser();if(token!==epoch)return;
-    if(verified.error||!verified.data.user){note('登入已失效，請重新登入');return;}
-    user=verified.data.user;store.setOwner(user.id);
+    if(verified.error||!verified.data.user){identityResolved=true;note('登入已失效，請重新登入');return;}
+    user=verified.data.user;store.setOwner(user.id);identityResolved=true;
     connection.repository=new api.Repository({owner:user.id,uuid:()=>crypto.randomUUID(),rpc:async(name,args)=>{
       if(token!==epoch)throw Error('帳號已切換');
       const result=await connection.client.rpc(name,args);
@@ -161,7 +161,7 @@ return C.resolve(remote,item.payload,item.baseCourse);
     }
   }
   window.BlanktimeCloudSession={
-    get signedIn(){return !!user;},get ready(){return ready;},get email(){return user?.email||null;},get lastSync(){return lastSync;},async retry(){if(!navigator.onLine){note('離線・本機資料保留，請恢復連線後再試');return false;}note('同步中…');if(await pull()===false)return false;return await flush();},
+    get resolved(){return identityResolved;},get signedIn(){return !!user;},get ready(){return ready;},get email(){return user?.email||null;},get lastSync(){return lastSync;},async retry(){if(!navigator.onLine){note('離線・本機資料保留，請恢復連線後再試');return false;}note('同步中…');if(await pull()===false)return false;return await flush();},
     now(){return ready?repository().now():Date.now();},
     async transactTimer(update){
       if(!ready||!navigator.onLine)throw Error('共享計時需連線；請稍後再操作');
@@ -219,7 +219,7 @@ return C.resolve(remote,item.payload,item.baseCourse);
       :'Google 登入未完成，請重新按「使用 Google 登入」。';
     try{
       const response=await fetch('cloud/config.json');if(!response.ok)throw Error('雲端設定尚未完成');const config=await response.json();
-      if(location.origin+location.pathname!==config.redirectUrl){note('本機預覽模式・未連接雲端');$('account-login').textContent='請在正式網站登入';return;}
+      if(location.origin+location.pathname!==config.redirectUrl){identityResolved=true;note('本機預覽模式・未連接雲端');$('account-login').textContent='請在正式網站登入';return;}
       connection=await api.connect(config);
       const settings=await fetch(config.supabaseUrl+'/auth/v1/settings',{headers:{apikey:config.publishableKey}});
       const provider=await settings.json();providerReady=provider.external?.google===true;

@@ -32,7 +32,7 @@
   }
   function catalog() {
     const pkg = active();
-    return {version:1, chapters: (pkg?.lessons || []).map(lesson => ({id:lesson.id, title:lesson.title, path:`chapters/lesson.html?chapter=${encodeURIComponent(lesson.id)}&v=workspace2`, concepts:lesson.concepts.map(c => ({id:c.id,title:c.title}))}))};
+    return {version:1, chapters: (pkg?.lessons || []).map(lesson => ({id:lesson.id, title:lesson.title, path:`chapters/lesson.html?chapter=${encodeURIComponent(lesson.id)}&v=fouc1`, concepts:lesson.concepts.map(c => ({id:c.id,title:c.title}))}))};
   }
   async function json(path) {
     const pkg = active();
@@ -68,7 +68,7 @@
     const l=p.lessons.find(x=>x.concepts.some(c=>c.id===conceptId));if(!l)throw Error('找不到對應觀念');
     const done=progress(courseId),target=done.includes(conceptId)?l.concepts.find(c=>!done.includes(c.id))||l.concepts.find(c=>c.id===conceptId):l.concepts.find(c=>c.id===conceptId);
     select(courseId);window.dispatchEvent(new Event('blanktime:course-selected'));document.querySelector('[data-page="materials"]').click();
-    document.getElementById('learning-frame').src='modules/learning/chapters/lesson.html?chapter='+encodeURIComponent(l.id)+'&v=workspace2#'+target.id;
+    document.getElementById('learning-frame').src='modules/learning/chapters/lesson.html?chapter='+encodeURIComponent(l.id)+'&v=fouc1#'+target.id;
   }
   window.BlanktimeData = {library, activeId, active, select, importPackage, catalog, json, progress,putDocument,expire,lifecycle,openConcept};
   const chapter = new URLSearchParams(location.search).get('chapter');

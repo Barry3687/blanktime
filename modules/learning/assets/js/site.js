@@ -1,5 +1,9 @@
 "use strict";
 
+document.querySelector('a.nav-home[aria-current="page"]')?.addEventListener('click',event=>{
+  event.preventDefault();window.scrollTo({top:0,behavior:document.documentElement.classList.contains('reduce-motion')?'auto':'smooth'});
+});
+
 const chapterList = document.querySelector("#chapter-list");
 const chapterNav = document.querySelector("#chapter-nav");
 const resetButton = document.querySelector("#reset-progress");

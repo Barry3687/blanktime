@@ -70,3 +70,10 @@ Google／Supabase 只同步整理後的課程、理解進度、熟悉度、垃�
 回歸檢查須包含 `node scripts/workspace.test.cjs` 與正常教材入口；本機離線資源驗收可用 `python scripts/preview-offline.py` 封鎖外部資源，不能只以獨立 MathJax fixture 宣稱整個 lesson 路徑無 CDN。原版番茄鐘與 `cloud/schema.sql` 本輪維持原檔不變。
 
 所有月曆、完整週檢視與每週固定課表均以星期日為一週第一天，依「日、一、二、三、四、五、六」排列；週末底色仍標示星期日與星期六，既有 weekday 0–6 資料不變。
+
+
+## 學習頁首次繪製與快取
+
+主站與學習首頁、章節、匯入說明頁的 head 最前方（charset 後）必須有同步主題 bootstrap，先讀同源父頁主題與閱讀／減少動態類別；獨立頁面退回目前儲存介面或白名單外觀快取，不讀取認證 token。共用阻擋繪製的 assets/themes.css 由 assets/themes.js 七套色票產生；執行 node scripts/sync-theme-bootstrap.cjs 同步四份 inline 與 CSS，避免色票分岔。延後載入的 themes.js 不得重設已初始化的主題。帳號確認期間保留最近外觀，確認後套用該帳號偏好。
+
+學習內部 index.html／getting-started.html 連結與動態章節路徑使用一致版號；更新時連同 core.js 路徑白名單與父頁 iframe src 更新。已在學習首頁點 a.nav-home[aria-current=page] 必須 preventDefault，只捲回頂端，減少動態時使用 auto。learning-frame 本身背景為 var(--bg)。回歸測試包含 node scripts/theme-bootstrap.test.cjs。

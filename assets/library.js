@@ -14,7 +14,7 @@
     select.value = data.activeId(); select.disabled = !courses.length;$('course-delete').disabled=!courses.length;
     renderStudy();
   }
-  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=workspace2'; }
+  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=fouc1'; }
   $('course-select').onchange = () => {
     try { data.select($('course-select').value); reloadLearning(); renderStudy(); }
     catch (e) { status(e.message); }
@@ -90,7 +90,7 @@
         const go = text('button', count ? '接續學習' : '開始學習'); go.type = 'button';
         go.onclick = () => {
           data.select(pkg.courseId); refreshCourses();
-          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=workspace2#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
+          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=fouc1#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
           document.querySelector('[data-page="materials"]').click();
         };
         item.append(select, info, go); list.append(item);

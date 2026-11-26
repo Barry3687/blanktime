@@ -5,9 +5,10 @@
   const node=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;return e;};
   const action=(text,fn)=>{const b=node('button',text);b.type='button';b.onclick=fn;return b;};
   const status=text=>{$('settings-status').textContent=text;};let restoreDraft=null,restoreBase=null;
-  function preferences(){return {font:'standard',reduced:false,importCollapsed:false,theme:'dusk',...JSON.parse(S.getItem(prefKey)||'{}')};}
+  function preferences(){let raw=S.getItem(prefKey);if(!window.BlanktimeCloudSession?.resolved)try{raw=localStorage.getItem('blanktime:appearance:v1')||raw;}catch{}return {font:'standard',reduced:false,importCollapsed:false,theme:'dusk',...JSON.parse(raw||'{}')};}
+  function cacheAppearance(p){try{localStorage.setItem('blanktime:appearance:v1',JSON.stringify({theme:window.BlanktimeThemes.get(p.theme).id,font:p.font==='large'?'large':'standard',reduced:p.reduced===true}));}catch{}}
   function apply(){
-    const p=preferences();window.BlanktimeThemes.apply(document,p.theme);document.documentElement.classList.toggle('reduce-motion',p.reduced);
+    const p=preferences();window.BlanktimeThemes.apply(document,p.theme);document.documentElement.classList.toggle('reduce-motion',p.reduced);document.documentElement.classList.toggle('reading-large',p.font==='large');cacheAppearance(p);
     const layout=document.querySelector('.bt-learning-layout');layout.classList.toggle('import-collapsed',p.importCollapsed);$('import-panel').hidden=p.importCollapsed;$('import-toggle').setAttribute('aria-expanded',String(!p.importCollapsed));$('import-toggle').textContent=(p.importCollapsed?'展開':'收合')+'教材匯入與原始預覽';
     try{const doc=$('learning-frame').contentDocument;window.BlanktimeThemes.apply(doc,p.theme);doc.documentElement.classList.toggle('reading-large',p.font==='large');doc.documentElement.classList.toggle('reduce-motion',p.reduced);}catch{}
     $('import-storage-note').textContent=window.BlanktimeCloudSession?.signedIn?'整理後的教材與進度會同步至雲端帳號；原始教材不上傳。':'訪客資料僅存於此瀏覽器；原始教材不上傳。';
@@ -58,6 +59,6 @@
   $('settings-material-prompt').onclick=()=>{$('copy-prompt').click();status('教材整理指令已複製；若剪貼簿受限可到教材匯入區查看文字。');};
   $('settings-course-prompt').onclick=()=>{$('planner-prompt').click();status('課表整理指令已複製；若剪貼簿受限可到課表匯入視窗查看文字。');};
   window.addEventListener('blanktime:library-refresh',()=>{renderTrash();apply();});window.addEventListener('blanktime:sync-state',()=>{syncInfo();apply();});
-  window.addEventListener('blanktime:store-change',e=>{if(e.detail.key===prefKey)apply();});
+  window.addEventListener('blanktime:store-change',e=>{if(e.detail.key===prefKey){try{cacheAppearance(JSON.parse(e.detail.newValue||'{}'));}catch{}apply();}});
   window.BlanktimeSettings={open,snapshot};D.expire();apply();renderTrash();
 })();

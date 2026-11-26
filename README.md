@@ -41,6 +41,7 @@
 - `node scripts/storage.test.cjs`
 - `node scripts/dusk.test.cjs`
 - `node scripts/workspace.test.cjs`
+- `node scripts/theme-bootstrap.test.cjs`
 - `node scripts/cloud.test.cjs`
 - `node scripts/cloud-app.test.cjs`
 - `node scripts/cloud-sql.test.cjs`（需另安裝 `@electric-sql/pglite` 或傳入 `dist/index.cjs` 路徑）
@@ -62,3 +63,10 @@
 更嚴格的離線資源驗收：執行 `python scripts/preview-offline.py`，開啟 `http://127.0.0.1:8766/`。測試伺服器用 CSP 封鎖外部腳本、連線與字型，從正常入口匯入自編教材後，公式、題幹、選項與即時解析仍產生本機 SVG，沒有外部資源阻擋錯誤。這不變更正式網站設定，也不宣稱提供整站首次離線下載。
 
 所有月曆、完整週檢視與每週固定課表均以星期日為一週第一天，依「日、一、二、三、四、五、六」排列；週末底色仍標示星期日與星期六，既有 weekday 0–6 資料不變。
+
+
+## 學習頁主題閃爍修正
+
+主站與三份學習 HTML 在 head 首次繪製前同步初始化七套主題、color-scheme、reading-large 與 reduce-motion；子頁先跟隨父頁，獨立頁面使用白名單外觀快取／既有偏好。外觀快取只包含主題、字體大小與減少動態三項，沒有讀取登入憑證。帳號驗證期間維持最近外觀，待帳號確認後再套用對應偏好。共用 themes.css 提供完整七套色票，iframe 本身沿用相同背景。
+
+學習首頁、章節、匯入教學的首頁與教學連結統一使用 fouc1 版號；已在學習首頁時再次點首頁只捲回頂端，不重新載入 iframe。更新色票時執行 node scripts/sync-theme-bootstrap.cjs 重新產生共享 CSS 與四份同步 inline。測試與實測涵蓋深淺主題往返、說明頁往返、閱讀偏好與主題重整保留。

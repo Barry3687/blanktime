@@ -1,4 +1,4 @@
-:root { color-scheme: dark; --bg: #0a0a0a; --panel: #161616; --text: #f2f2f2; --muted: #a0a0a0; --accent: #dedede; --line: #333333; }
+:root { color-scheme: dark; --bg: #13111B; --panel: #1B1826; --text: #F2EFF7; --muted: #A9A0BC; --accent: #C7A6EB; --line: rgba(196,178,232,.14); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; line-height: 1.8; }
