@@ -5,18 +5,18 @@
   const node=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;return e;};
   const action=(text,fn)=>{const b=node('button',text);b.type='button';b.onclick=fn;return b;};
   const status=text=>{$('settings-status').textContent=text;};let restoreDraft=null,restoreBase=null;
-  function preferences(){return {font:'standard',reduced:false,importCollapsed:false,...JSON.parse(S.getItem(prefKey)||'{}')};}
+  function preferences(){return {font:'standard',reduced:false,importCollapsed:false,theme:'dusk',...JSON.parse(S.getItem(prefKey)||'{}')};}
   function apply(){
-    const p=preferences();document.documentElement.classList.toggle('reduce-motion',p.reduced);
+    const p=preferences();window.BlanktimeThemes.apply(document,p.theme);document.documentElement.classList.toggle('reduce-motion',p.reduced);
     const layout=document.querySelector('.bt-learning-layout');layout.classList.toggle('import-collapsed',p.importCollapsed);$('import-panel').hidden=p.importCollapsed;$('import-toggle').setAttribute('aria-expanded',String(!p.importCollapsed));$('import-toggle').textContent=(p.importCollapsed?'展開':'收合')+'教材匯入與原始預覽';
-    try{const doc=$('learning-frame').contentDocument;doc.documentElement.classList.toggle('reading-large',p.font==='large');doc.documentElement.classList.toggle('reduce-motion',p.reduced);}catch{}
+    try{const doc=$('learning-frame').contentDocument;window.BlanktimeThemes.apply(doc,p.theme);doc.documentElement.classList.toggle('reading-large',p.font==='large');doc.documentElement.classList.toggle('reduce-motion',p.reduced);}catch{}
     $('import-storage-note').textContent=window.BlanktimeCloudSession?.signedIn?'整理後的教材與進度會同步至雲端帳號；原始教材不上傳。':'訪客資料僅存於此瀏覽器；原始教材不上傳。';
   }
   function renderTrash(){
     const rows=Object.values(D.library().trash);$('trash-count').textContent=rows.length;const host=$('trash-list');host.replaceChildren();
     if(!rows.length)host.append(node('p','垃圾桶是空的。'));
     for(const doc of rows){const box=document.createElement('article');box.className='trash-item';box.append(node('h3',doc.title),node('p','刪除於 '+new Date(doc.deletedAt).toLocaleDateString('zh-TW')+'・剩餘 '+Math.max(0,Math.ceil((doc.purgeAt-Date.now())/C.DAY))+' 天'));
-      box.append(action('還原課程',()=>{try{D.lifecycle(doc.courseId,'restore');status('課程、進度與熟悉度已還原。');}catch(e){status(e.message);}}),action('立即永久刪除',()=>{if(!confirm('永久清除「'+doc.title+'」及其理解進度、熟悉度？此操作無法還原。'))return;try{D.lifecycle(doc.courseId,'purge');status('已永久清除；登入時會同步清除標記。');}catch(e){status(e.message);}}));host.append(box);
+      box.append(action('還原課程',()=>{try{D.lifecycle(doc.courseId,'restore');status('課程、進度與熟悉度已還原。');}catch(e){status(e.message);}}),action('立即永久刪除',async()=>{if(!await BlanktimeDialogs.ask('永久清除「'+doc.title+'」及其理解進度、熟悉度？此操作無法還原。'))return;try{D.lifecycle(doc.courseId,'purge');status('已永久清除；登入時會同步清除標記。');}catch(e){status(e.message);}}));host.append(box);
     }
   }
   function syncInfo(){const cloud=window.BlanktimeCloudSession;$('settings-account').textContent=cloud?.signedIn?'登入帳號：'+cloud.email:'訪客模式';$('settings-sync-time').textContent='最後同步：'+(cloud?.lastSync?new Date(cloud.lastSync).toLocaleString('zh-TW'):'尚未同步');$('settings-cache').textContent='此帳號有 '+S.keys().length+' 個本機快取項目。訪客資料與各帳號分開保存；原始教材只在頁面記憶體預覽。';}
@@ -24,7 +24,7 @@
     D.expire();renderTrash();syncInfo();apply();
     for(const b of document.querySelectorAll('[data-setting]'))b.setAttribute('aria-selected',String(b.dataset.setting===tab));
     for(const panel of document.querySelectorAll('[data-settings-panel]'))panel.hidden=panel.dataset.settingsPanel!==tab;
-    const p=window.BlanktimePlanner.read().prefs;$('pref-day-start').value=P.time(p.dayStart);$('pref-day-end').value=P.time(p.dayEnd);$('pref-max').value=p.maxStudyMinutes;$('pref-font').value=preferences().font;$('pref-reduced').checked=preferences().reduced;
+    const p=window.BlanktimePlanner.read().prefs;$('pref-day-start').value=P.time(p.dayStart);$('pref-day-end').value=P.time(p.dayEnd);$('pref-max').value=p.maxStudyMinutes;$('pref-theme').value=preferences().theme;$('pref-font').value=preferences().font;$('pref-reduced').checked=preferences().reduced;
     if(!$('settings-dialog').open)$('settings-dialog').showModal();
   }
   function snapshot(){
@@ -34,6 +34,8 @@
     return {format:'blanktime.backup/v2',createdAt:Date.now(),library,progress,mastery,lastPositions,schedule:window.BlanktimePlanner.read(),timerRecords:B.records(timer?.records||[]),preferences:preferences()};
   }
   function snapshotKey(){const b=snapshot();delete b.createdAt;return window.BlanktimeValue.canonical(b);}
+  for(const t of window.BlanktimeThemes.themes){const o=node('option',t.name+'（'+(t.scheme==='dark'?'深色':'淺色')+'）');o.value=t.id;$('pref-theme').append(o);}
+  $('pref-theme').onchange=()=>{try{S.setItem(prefKey,JSON.stringify({...preferences(),theme:$('pref-theme').value}));apply();status('外觀已保存。');}catch(e){status(e.message);}};
   $('settings-open').onclick=()=>open();$('settings-close').onclick=()=>$('settings-dialog').close();
   document.querySelectorAll('[data-setting]').forEach(b=>b.onclick=()=>open(b.dataset.setting));
   $('import-toggle').onclick=()=>{S.setItem(prefKey,JSON.stringify({...preferences(),importCollapsed:!preferences().importCollapsed}));apply();};

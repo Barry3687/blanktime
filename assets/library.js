@@ -14,7 +14,7 @@
     select.value = data.activeId(); select.disabled = !courses.length;$('course-delete').disabled=!courses.length;
     renderStudy();
   }
-  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=dusk1'; }
+  function reloadLearning() { $('learning-frame').src = 'modules/learning/index.html?v=workspace2'; }
   $('course-select').onchange = () => {
     try { data.select($('course-select').value); reloadLearning(); renderStudy(); }
     catch (e) { status(e.message); }
@@ -64,9 +64,9 @@
     if (!courses.length) return;
     for (const pkg of courses) {
       const completed = data.progress(pkg.courseId), mastery = JSON.parse(store.getItem(masteryKey(pkg.courseId)) || '{}');
-      const section = document.createElement('section'); section.className = 'bt-course-plan';
+      const section = document.createElement('section'); section.className = 'bt-course-plan';section.dataset.courseId=pkg.courseId;
       section.append(text('h3', pkg.title));
-      const dl=document.createElement('label');dl.textContent='這門課的考試／複習期限';const input=document.createElement('input');input.type='datetime-local';input.setAttribute('aria-label',pkg.title+'考試期限');
+      const dl=document.createElement('label');dl.textContent='這門課的考試／複習期限';const input=document.createElement('input');input.type='datetime-local';input.dataset.deadlineCourse=pkg.courseId;input.setAttribute('aria-label',pkg.title+'考試期限');
       const at=JSON.parse(store.getItem('blanktime:planner:v1')||'{}').deadlines?.[pkg.courseId]?.at;
       if(at){const d=new Date(at);input.value=window.BlanktimePlannerCore.dateKey(d)+'T'+window.BlanktimePlannerCore.time(d.getHours()*60+d.getMinutes());}
       input.onchange=()=>{window.BlanktimePlanner.setDeadline(pkg.courseId,input.value?new Date(input.value).toISOString():null);renderStudy();};dl.append(input);section.append(dl);
@@ -90,7 +90,7 @@
         const go = text('button', count ? '接續學習' : '開始學習'); go.type = 'button';
         go.onclick = () => {
           data.select(pkg.courseId); refreshCourses();
-          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=dusk1#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
+          $('learning-frame').src = 'modules/learning/chapters/lesson.html?chapter=' + encodeURIComponent(lesson.id) + '&v=workspace2#' + (lesson.concepts.find(c => !completed.includes(c.id)) || lesson.concepts[0]).id;
           document.querySelector('[data-page="materials"]').click();
         };
         item.append(select, info, go); list.append(item);
@@ -100,9 +100,9 @@
     host.append(text('p', '讀書進度與章節熟悉度分開記錄，答對一題不會自動升級。可在上方預覽一週規則排程，確認後加入每日安排。'));
   }
   $('library-export').onclick=()=>window.BlanktimeSettings.open('backup');
-  $('course-delete').onclick=()=>{
+  $('course-delete').onclick=async()=>{
     const pkg=data.active();if(!pkg)return;
-    if(confirm('將「'+pkg.title+'」移至垃圾桶？保留 30 天，進度與熟悉度會保留。')){
+    if(await BlanktimeDialogs.ask('將「'+pkg.title+'」移至垃圾桶？保留 30 天，進度與熟悉度會保留。')){
       try{data.lifecycle(pkg.courseId,'trash');refreshCourses();reloadLearning();status('已移至垃圾桶，可在設定內還原。');}catch(e){status(e.message);}
     }
   };
@@ -112,6 +112,7 @@
     catch { $('prompt-status').textContent = prompt; }
   };
   window.addEventListener('storage', e => { if(e.key?.startsWith('blanktime:learning:progress:')) renderStudy(); });
+  window.addEventListener('blanktime:course-selected',()=>{refreshCourses();status('目前課程：'+(data.active()?.title||''));});
   window.addEventListener('blanktime:study', () => { try {renderStudy();} catch(e){status(e.message);} });
   window.addEventListener('blanktime:library-refresh', () => { try { refreshCourses(); } catch(e) { status(e.message); } });
   try {refreshCourses();} catch(e) {status('無法讀取本機資料：' + e.message);}

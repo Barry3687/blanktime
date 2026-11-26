@@ -8,7 +8,7 @@
   const note=message=>{
     const state=/離線/.test(message)?'offline':/訪客|本機預覽/.test(message)?'guest':/^已同步$/.test(message)?'synced':/保存中|同步中|正在/.test(message)?'saving':'attention';
     if(state==='synced')lastSync=Date.now();
-    $('account-status').textContent=message;$('sync-status').textContent=({offline:'離線',guest:'訪客',synced:'已同步',saving:'保存中',attention:'待處理'})[state];$('sync-status').dataset.state=state;$('sync-status').title=message;
+    $('account-status').textContent=message;$('sync-label').textContent=({offline:'離線',guest:'訪客',synced:'已同步',saving:'保存中',attention:'待處理'})[state];$('sync-status').dataset.state=state;$('sync-status').title=message;$('sync-status').setAttribute?.('aria-label','同步狀態：'+message+'；點擊'+(user?'重新同步':'登入'));
     $('account-open').title=message;$('account-open').textContent='帳號';
     window.dispatchEvent(new CustomEvent('blanktime:sync-state',{detail:{state,message,lastSync,email:user?.email||null}}));
   };
@@ -21,7 +21,7 @@
   function repository(){return connection.repository;}
   function notifyChanges(){window.dispatchEvent(new Event('blanktime:library-refresh'));}
   function framesReload(){
-    $('learning-frame').src='modules/learning/index.html?v=dusk1';
+    $('learning-frame').src='modules/learning/index.html?v=workspace2';
     $('pomodoro-frame').src='modules/pomodoro/index.html?v=cloud1';
     window.LectureWorkspace?.resetMaterials?.();
     notifyChanges();
@@ -39,7 +39,7 @@
         const old=C.documents(window.BlanktimeData.library())[row.document_id];
         if(!window.BlanktimeValue.equal(old,row.payload)) {
           window.BlanktimeData.putDocument(row.payload,'remote');
-          $('learning-frame').src='modules/learning/index.html?v=dusk1';
+          $('learning-frame').src='modules/learning/index.html?v=workspace2';
         }
       }
       if(row.kind==='progress') {
@@ -57,7 +57,7 @@
     if(!ready||pulling||!navigator.onLine)return;
     const token=epoch;pulling=true;
     try {const rows=await repository().pull();if(token!==epoch)return;applyRows(rows);notifyChanges();if(!Object.keys(pending).length)note('已同步');}
-    catch(e){if(token===epoch)note('暫時無法同步；本機資料保留。');}
+    catch(e){if(token===epoch)note('暫時無法同步；本機資料保留：'+e.message);return false;}
     finally{if(token===epoch)pulling=false;}
   }
   function queue(kind,id,payload,extra={}){
@@ -161,7 +161,7 @@ return C.resolve(remote,item.payload,item.baseCourse);
     }
   }
   window.BlanktimeCloudSession={
-    get signedIn(){return !!user;},get ready(){return ready;},get email(){return user?.email||null;},get lastSync(){return lastSync;},async retry(){await pull();await flush();},
+    get signedIn(){return !!user;},get ready(){return ready;},get email(){return user?.email||null;},get lastSync(){return lastSync;},async retry(){if(!navigator.onLine){note('離線・本機資料保留，請恢復連線後再試');return false;}note('同步中…');if(await pull()===false)return false;return await flush();},
     now(){return ready?repository().now():Date.now();},
     async transactTimer(update){
       if(!ready||!navigator.onLine)throw Error('共享計時需連線；請稍後再操作');
@@ -174,6 +174,7 @@ return C.resolve(remote,item.payload,item.baseCourse);
       finally{if(token===epoch)timerBusy--;}
     }
   };
+  $('sync-status').onclick=async()=>{if(!user){$('account-dialog').showModal();return;}const b=$('sync-status');b.disabled=true;try{await window.BlanktimeCloudSession.retry();}finally{b.disabled=false;}};
   $('account-open').onclick=()=>$('account-dialog').showModal();
   $('account-close').onclick=()=>$('account-dialog').close();
   $('account-login').onclick=async()=>{try{if(!providerReady)throw Error('Google 登入仍待完成服務設定');await connection.signIn();}catch(e){note(e.message);}};

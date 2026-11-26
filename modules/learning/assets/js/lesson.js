@@ -199,7 +199,7 @@ function renderConcept() {
   renderMath(target, token);
 }
 function renderMath(host, token = renderToken) {
-  if (!window.MathJax?.typesetPromise) return;
+  if (!window.MathJax?.startup?.promise) return;
   window.MathJax.startup.promise.then(() => {
     if (token === renderToken && host.isConnected) return window.MathJax.typesetPromise([host]);
   }).catch(() => {});
@@ -217,8 +217,8 @@ document.querySelector("#menu-toggle").addEventListener("click", e => {
   const open = e.currentTarget.getAttribute("aria-expanded") !== "true";
   e.currentTarget.setAttribute("aria-expanded", String(open)); document.querySelector("#sidebar").classList.toggle("is-open", open);
 });
-document.querySelector("#reset-progress").addEventListener("click", () => {
-  if (confirm("要重設這門課程的理解進度嗎？登入時會同步到其他裝置。")) { savedProgress.reset(); quizStates.clear(); renderConcept(); }
+document.querySelector("#reset-progress").addEventListener("click", async () => {
+  if (await BlanktimeDialogs.ask("要重設這門課程的理解進度嗎？登入時會同步到其他裝置。")) { savedProgress.reset(); quizStates.clear(); renderConcept(); }
 });
 (async () => {
   try {
@@ -228,11 +228,6 @@ document.querySelector("#reset-progress").addEventListener("click", () => {
     lesson = core.validateLesson(await getJSON(`../content/${chapter.id}/lesson.json`), chapter);
     if (!lesson.concepts.length) throw Error("本章尚未加入觀念。");
     document.querySelector("#chapter-name").textContent = chapter.title;
-    window.MathJax = { tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] }, options: { enableMenu: false }, startup: { typeset: false } };
-    const script = document.createElement("script"); script.src = "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js";
-    script.addEventListener("load", () => renderMath(target));
-    script.addEventListener("error", () => target.prepend(element("p", "公式排版服務暫時無法載入，以下保留原始 LaTeX 公式。", "source-note")));
-    document.head.append(script);
     if (!location.hash) {
       const resume = core.resumeConcept([chapter], savedProgress.completed, savedProgress.lastId);
       history.replaceState(null, "", `#${resume.concept.id}`);

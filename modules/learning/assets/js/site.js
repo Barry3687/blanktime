@@ -45,8 +45,8 @@ function updateProgress() {
   }
 }
 
-resetButton.addEventListener("click", () => {
-  if (!window.confirm("要重設這個瀏覽器的學習進度嗎？")) return;
+resetButton.addEventListener("click", async () => {
+  if (!await BlanktimeDialogs.ask("要重設這個瀏覽器的學習進度嗎？")) return;
   progressState.reset();
   updateProgress();
 });

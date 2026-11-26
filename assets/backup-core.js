@@ -13,6 +13,7 @@
       if(b.lastPositions?.[id]&&!ids.has(b.lastPositions[id]))throw Error('接續位置不在教材內');
     }
     if(b.format==='blanktime.backup/v2'){P.validate(b.schedule);records(b.timerRecords);if(b.preferences&&(!['standard','large'].includes(b.preferences.font)||typeof b.preferences.reduced!=='boolean'))throw Error('閱讀偏好資料錯誤');}
+    if(b.preferences?.theme!==undefined&&!['dusk','blue','wine','study','paper','sky','lilac'].includes(b.preferences.theme))throw Error('佈景主題資料錯誤');
     return b;
   }
   function merge(current,backup,validator){

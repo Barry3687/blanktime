@@ -6,7 +6,7 @@
     const ids = new Set();
     for (const chapter of data.chapters) {
       if (!/^ch\d{2}-[a-z0-9-]+$/.test(chapter.id) || typeof chapter.title !== "string" ||
-          (chapter.path !== `chapters/${chapter.id}.html` && ![`chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=dusk1`, `chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=20261124`, `chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=20261126`].includes(chapter.path)) || !Array.isArray(chapter.concepts)) throw Error("章節資料不完整");
+          (chapter.path !== `chapters/${chapter.id}.html` && ![`chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=workspace2`, `chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=dusk1`, `chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=20261124`, `chapters/lesson.html?chapter=${encodeURIComponent(chapter.id)}&v=20261126`].includes(chapter.path)) || !Array.isArray(chapter.concepts)) throw Error("章節資料不完整");
       if (ids.has(chapter.id)) throw Error("重複章節");
       ids.add(chapter.id);
       for (const concept of chapter.concepts) {

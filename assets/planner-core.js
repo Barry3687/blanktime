@@ -23,8 +23,10 @@
       if(e.deadline&&!Number.isFinite(Date.parse(e.deadline)))throw Error('截止時間錯誤');
       if(e.includeCalendar!==undefined&&typeof e.includeCalendar!=='boolean')throw Error('重要行事曆選項錯誤');
       if(e.estimate!==undefined&&(!Number.isFinite(e.estimate)||e.estimate<=0||e.estimate>1440))throw Error('預估工時錯誤');
+      if(e.manualIncomplete!==undefined&&typeof e.manualIncomplete!=='boolean')throw Error('未完成狀態錯誤');
     }
     for(const c of state.courses){if(!Number.isInteger(c.weekday)||c.weekday<0||c.weekday>6)throw Error('課表星期錯誤');day(c.from);day(c.to);if(c.to<c.from)throw Error('課表結束日期早於開始');const a=minutes(c.start),b=minutes(c.end);if(a>=b||a%5||b%5)throw Error('課程時間錯誤');if(!Array.isArray(c.exceptions))throw Error('停課日期格式錯誤');c.exceptions.forEach(day);}
+    for(const c of state.courses)for(const k of ['professor','room','linkedCourseId'])if(c[k]!==undefined&&(typeof c[k]!=='string'||c[k].length>200))throw Error('課程詳細資料格式錯誤');
     const p=state.prefs;if(!p||!Number.isInteger(p.dayStart)||!Number.isInteger(p.dayEnd)||p.dayStart<0||p.dayEnd>1439||p.dayStart>=p.dayEnd||!Number.isInteger(p.maxStudyMinutes)||p.maxStudyMinutes<30||p.maxStudyMinutes>720||p.maxStudyMinutes%30)throw Error('讀書時段設定錯誤');
     if(state.deadlines!==undefined&&(!state.deadlines||typeof state.deadlines!=='object'||Array.isArray(state.deadlines)))throw Error('各科期限格式錯誤');
     for(const d of Object.values(state.deadlines||{}))if(!d||d.at!==null&&!Number.isFinite(Date.parse(d.at))||!Number.isFinite(d.updatedAt))throw Error('各科期限格式錯誤');
@@ -40,10 +42,10 @@
     if(['rest','flex','holiday','class'].includes(event.type))return false;
     return event.includeCalendar??(event.source==='user'&&IMPORTANT.includes(event.type));
   }
-  function calendarForDay(state,date){
+  function calendarForDay(state,date,courses={}){
     // A task may be planned on one day but due on another. Show its deadline
     // on the actual due date as well, without creating a second stored task.
-    return state.events.filter(isCalendarEvent).flatMap(event=>{
+    return [...state.events.filter(isCalendarEvent),...deadlineEvents(state,courses)].flatMap(event=>{
       if(event.date===date)return [{...event}];
       if(event.deadline&&dateKey(new Date(event.deadline))===date)return [{...event,deadlineOnly:true}];
       return [];
@@ -52,12 +54,13 @@
   function status(event,now=Date.now()){
     if(![...IMPORTANT,'study'].includes(event.type))return null;
     if(event.completed)return '已完成';
+    if(event.manualIncomplete)return '未完成';
     const end=event.end?stamp(event.date,minutes(event.end)):null;
     if(end!==null&&end<=now||event.deadline&&Date.parse(event.deadline)<=now||!event.end&&!event.deadline&&event.date<dateKey(new Date(now)))return '未完成';
     return null;
   }
   function retainPlan(event,now=Date.now()){
-    return event.completed===true||!!event.end&&stamp(event.date,minutes(event.end))<=now;
+    return event.completed===true||event.manualIncomplete===true||!!event.end&&stamp(event.date,minutes(event.end))<=now;
   }
   function priority(event,now=Date.now()){
     const hours=event.deadline?(Date.parse(event.deadline)-now)/3600000:Infinity;
@@ -121,7 +124,7 @@
     const out=JSON.parse(JSON.stringify(state)),course=out.courses.find(c=>c.id===id);
     if(!course||!forDay(out,original).some(c=>c.source==='course'&&c.id===id+'@'+original))throw Error('原日期沒有這門課，請確認星期或停課紀錄');
     day(date);course.exceptions.push(original);course.updatedAt=now;
-    out.events.push({id:newId,title:course.title+'（調課）',type:'class',source:'user',date,start,end,importance:0,includeCalendar:false,includeMatrix:false,completed:false,updatedAt:now,rescheduledFrom:{courseId:id,date:original}});
+    out.events.push({id:newId,title:course.title+'（調課）',professor:course.professor||'',room:course.room||'',linkedCourseId:course.linkedCourseId||'',type:'class',source:'user',date,start,end,importance:0,includeCalendar:false,includeMatrix:false,completed:false,updatedAt:now,rescheduledFrom:{courseId:id,date:original}});
     return validate(out);
   }
   function layoutMatrix(items,width,height,now=Date.now()){
@@ -139,5 +142,24 @@
     }
     return placed;
   }
-  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge,remainingMinutes,mergeDeadlines,reschedule,layoutMatrix};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
+  function cancelClass(state,id,date,now){
+    const out=JSON.parse(JSON.stringify(state)),c=out.courses.find(c=>c.id===id);
+    if(!c||!forDay(out,date).some(e=>e.source==='course'&&e.id===id+'@'+date))throw Error('這一天沒有這門固定課程，請核對日期與停課紀錄');
+    c.exceptions.push(date);c.updatedAt=now;return validate(out);
+  }
+  function undoClassChange(state,id,date,now){
+    const out=JSON.parse(JSON.stringify(state)),c=out.courses.find(c=>c.id===id);if(!c||!c.exceptions.includes(date))throw Error('找不到這筆停課紀錄');
+    const removed=out.events.filter(e=>e.rescheduledFrom?.courseId===id&&e.rescheduledFrom.date===date);
+    out.events=out.events.filter(e=>!removed.includes(e));out.tombstones=[...new Set([...out.tombstones,...removed.map(e=>e.id)])];c.exceptions=c.exceptions.filter(x=>x!==date);c.updatedAt=now;return validate(out);
+  }
+  function markStudy(state,id,completed,now){const out=JSON.parse(JSON.stringify(state)),e=out.events.find(e=>e.id===id);if(!e||e.type!=='study')throw Error('找不到讀書時段');e.completed=completed;e.manualIncomplete=!completed;e.updatedAt=now;return validate(out);}
+  function unfinished(state,now=Date.now()){return state.events.filter(e=>['study','task','assignment','report','exam','meeting'].includes(e.type)&&status(e,now)==='未完成');}
+  function deadlineEvents(state,courses={}){return Object.entries(state.deadlines||{}).filter(([id,d])=>d.at&&courses[id]).map(([id,d])=>({id:'deadline:'+id,courseId:id,title:courses[id].title+'・考試／複習期限',date:dateKey(new Date(d.at)),type:'exam',source:'deadline',deadline:d.at,deadlineOnly:true,importance:95,includeCalendar:true,completed:false}));}
+  function fullForDay(state,date,courses={}){const rows=forDay(state,date),ids=new Set(rows.map(e=>e.id));return [...rows,...calendarForDay(state,date,courses).filter(e=>!ids.has(e.id))];}
+  function weekStart(date){return addDays(date,-((day(date).getDay()+6)%7));}
+  function timetable(courses){
+    const out=[];for(const c of courses){const start=Math.max(480,minutes(c.start)),end=Math.min(1320,minutes(c.end));if(end>start)out.push({id:c.id,day:(c.weekday+6)%7,top:start-480,height:end-start,lane:0,lanes:1});}
+    for(let d=0;d<7;d++){const rows=out.filter(x=>x.day===d).sort((a,b)=>a.top-b.top);let group=[],end=-1;const finish=()=>{const lanes=Math.max(1,...group.map(x=>x.lane+1));group.forEach(x=>x.lanes=lanes);};for(const row of rows){if(row.top>=end){finish();group=[];end=-1;}let lane=0;while(group.some(x=>x.lane===lane&&x.top+x.height>row.top))lane++;row.lane=lane;group.push(row);end=Math.max(end,row.top+row.height);}finish();}return out;
+  }
+  const api={dateKey,day,addDays,minutes,time,blank,validate,forDay,isCalendarEvent,calendarForDay,status,retainPlan,priority,matrix,createPlan,merge,remainingMinutes,mergeDeadlines,reschedule,layoutMatrix,cancelClass,undoClassChange,markStudy,unfinished,deadlineEvents,fullForDay,weekStart,timetable};scope.BlanktimePlannerCore=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

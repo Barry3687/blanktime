@@ -132,6 +132,15 @@ async function main(){
   sa=pa.reschedule(sa,'fixed','2026-11-26','2026-11-27','10:05','12:05',Date.now(),'makeup');
   deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(sa));await settle();await deviceA.retry();await deviceB.retry();
   const sb=JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey));assert.ok(sb.courses[0].exceptions.includes('2026-11-26'));assert.equal(sb.events[0].start,'10:05');
+  // Manual incomplete is distinct from an upcoming default state and is synced.
+  let currentSchedule=JSON.parse(deviceA.window.BlanktimeStore.getItem(scheduleKey));
+  currentSchedule.events.push({id:'study-slot',title:'同步讀書時段',type:'study',source:'plan',date:'2026-12-01',start:'13:00',end:'14:00',importance:0,completed:false,updatedAt:1});
+  currentSchedule=pa.markStudy(currentSchedule,'study-slot',false,Date.now());deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(currentSchedule));await settle();await deviceA.retry();await deviceB.retry();
+  assert.equal(JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey)).events.find(e=>e.id==='study-slot').manualIncomplete,true);
+  currentSchedule=pa.undoClassChange(JSON.parse(deviceA.window.BlanktimeStore.getItem(scheduleKey)),'fixed','2026-11-26',Date.now());deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(currentSchedule));await settle();await deviceA.retry();await deviceB.retry();
+  assert.ok(!JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey)).events.some(e=>e.id==='makeup'));
+  currentSchedule=pa.cancelClass(JSON.parse(deviceA.window.BlanktimeStore.getItem(scheduleKey)),'fixed','2026-11-26',Date.now());deviceA.window.BlanktimeStore.setItem(scheduleKey,JSON.stringify(currentSchedule));await settle();await deviceA.retry();await deviceB.retry();
+  assert.ok(JSON.parse(deviceB.window.BlanktimeStore.getItem(scheduleKey)).courses[0].exceptions.includes('2026-11-26'));
   deviceB.context.navigator.onLine=false;
   const stale=clone(pkg);stale.revision=2;deviceB.window.BlanktimeData.importPackage(stale);
   deviceA.window.BlanktimeData.lifecycle(pkg.courseId,'trash');await settle();await deviceA.retry();
